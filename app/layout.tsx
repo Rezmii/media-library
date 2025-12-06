@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
-// Zaraz to stworzymy
 import { cn } from '@/lib/utils';
 
+import { MobileNav } from '@/components/layout/mobile-nav';
+import { Sidebar } from '@/components/layout/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 
 import './globals.css';
@@ -21,7 +22,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Wymuszamy klasę 'dark' i antyaliasing dla lepszej typografii
     <html lang="pl" className="dark" suppressHydrationWarning>
       <body
         className={cn(
@@ -35,7 +35,20 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <div className="flex min-h-screen flex-col md:flex-row">
+            {/* 1. Sidebar (Desktop) */}
+            <Sidebar />
+
+            {/* 2. Main Content Wrapper */}
+            <div className="flex min-h-screen flex-1 flex-col">
+              <header className="bg-background/95 sticky top-0 z-50 flex h-14 items-center border-b px-4 backdrop-blur md:hidden">
+                <MobileNav />
+                <span className="ml-4 font-bold">Media Library</span>
+              </header>
+
+              <main className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-8 lg:p-10">{children}</main>
+            </div>
+          </div>
         </ThemeProvider>
       </body>
     </html>

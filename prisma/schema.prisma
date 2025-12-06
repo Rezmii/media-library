@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MediaType {
+  GAME
+  MOVIE
+  SERIES
+  BOOK
+  ALBUM
+}
+
+enum Status {
+  BACKLOG     // Do zrobienia/przeczytania
+  IN_PROGRESS // W trakcie
+  COMPLETED   // Skończone
+  ABANDONED   // Porzucone
+}
+
+model MediaItem {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  type        MediaType
+  status      Status    @default(BACKLOG)
+  
+  title       String
+  coverUrl    String?   // Może być null, jeśli jeszcze nie pobraliśmy okładki
+  rating      Int?      // Twoja ocena 1-5 (opcjonalna)
+
+  metadata    Json?     
+
+  tags        Tag[]
+}
+
+model Tag {
+  id    String      @id @default(uuid())
+  name  String      @unique
+  items MediaItem[] 
+}
