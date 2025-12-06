@@ -1,7 +1,15 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'i.scdn.co' }, // Spotify
+      { protocol: 'https', hostname: 'media.rawg.io' }, // RAWG (Gry)
+      { protocol: 'https', hostname: 'image.tmdb.org' }, // TMDB (Filmy)
+      { protocol: 'https', hostname: 'books.google.com' }, // Google Books
+      { protocol: 'https', hostname: 'books.google.pl' }, // Google Books (lokalne)
+    ],
+  },
 };
 
 export default nextConfig;

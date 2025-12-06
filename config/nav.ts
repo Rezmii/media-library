@@ -1,5 +1,5 @@
 // config/nav.ts
-import { BookOpen, Disc, Film, Gamepad2, LayoutGrid, Settings, Tags } from 'lucide-react';
+import { BookOpen, Disc, Film, Gamepad2, LayoutGrid, Settings, Tags, Tv } from 'lucide-react';
 
 export const navItems = [
   {
@@ -16,9 +16,14 @@ export const navItems = [
         icon: Gamepad2,
       },
       {
-        title: 'Filmy i Seriale',
+        title: 'Filmy',
         href: '/movies',
         icon: Film,
+      },
+      {
+        title: 'Seriale',
+        href: '/series',
+        icon: Tv,
       },
       {
         title: 'Książki',

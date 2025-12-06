@@ -15,19 +15,22 @@ export function SidebarContent() {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <div className="flex h-14 items-center border-b px-6">
-        <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-          <Ghost className="text-primary h-6 w-6" />
+    <div className="flex h-full flex-col gap-4 py-4">
+      <div className="flex h-16 items-center px-6">
+        <Link
+          href="/"
+          className="flex items-center gap-3 text-2xl font-bold tracking-tight text-white"
+        >
+          <Ghost className="text-primary h-8 w-8" />
           <span>Media Library</span>
         </Link>
       </div>
 
       <ScrollArea className="flex-1 px-3 py-3">
-        <nav className="flex flex-col gap-6">
+        <nav className="flex flex-col gap-8">
           {navItems.map((group, index) => (
-            <div key={index} className="flex flex-col gap-2">
-              <h4 className="text-muted-foreground px-2 text-xs font-semibold tracking-wider uppercase">
+            <div key={index} className="flex flex-col gap-3">
+              <h4 className="text-muted-foreground text-md px-2 font-semibold tracking-wider uppercase">
                 {group.title}
               </h4>
               {group.items.map((item) => {
@@ -40,12 +43,12 @@ export function SidebarContent() {
                     variant={isActive ? 'secondary' : 'ghost'}
                     asChild
                     className={cn(
-                      'justify-start gap-3',
+                      'h-12 justify-start gap-4 px-4 text-lg font-medium',
                       isActive && 'bg-zinc-800 font-medium text-white'
                     )}
                   >
                     <Link href={item.href}>
-                      <Icon className="h-4 w-4" />
+                      <Icon className="!h-6 !w-6 shrink-0 stroke-[1.5]" />
                       {item.title}
                     </Link>
                   </Button>
@@ -63,7 +66,7 @@ export function SidebarContent() {
 
 export function Sidebar() {
   return (
-    <div className="sticky top-0 hidden h-screen w-64 border-r bg-zinc-950/50 md:block">
+    <div className="sticky top-0 hidden h-screen w-80 border-r bg-zinc-950/50 md:block">
       <SidebarContent />
     </div>
   );
