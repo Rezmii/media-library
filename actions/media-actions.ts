@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 
+import Fuse from 'fuse.js';
+
 import { UnifiedMediaItem } from '@/core/types/media';
 
 import { googleBooksClient } from '@/lib/api-clients/google-books';
@@ -35,16 +37,28 @@ export async function searchMediaAction(query: string): Promise<UnifiedMediaItem
       googleBooksClient.searchBooks(query),
     ]);
 
-    let allResults = [...games, ...movies, ...albums, ...books];
+    const rawResults = [...games, ...movies, ...albums, ...books];
 
-    allResults = allResults.sort(() => Math.random() - 0.5);
+    const fuse = new Fuse(rawResults, {
+      keys: [
+        { name: 'title', weight: 0.7 },
+        { name: 'type', weight: 0.1 },
+        { name: 'metadata.artist', weight: 0.2 },
+        { name: 'metadata.author', weight: 0.2 },
+      ],
+      includeScore: true,
+      threshold: 0.4,
+      ignoreLocation: true,
+    });
+
+    const fusedResults = fuse.search(query);
 
     const existingIds = await getExistingLibraryIds();
 
-    return allResults
-      .map((item) => ({
-        ...item,
-        isAdded: existingIds.has(item.externalId),
+    return fusedResults
+      .map((result) => ({
+        ...result.item,
+        isAdded: existingIds.has(result.item.externalId),
       }))
       .slice(0, 20);
   } catch (error) {

@@ -11,6 +11,7 @@ interface RawgGame {
   released: string;
   platforms: { platform: { name: string } }[];
   rating: number;
+  added: number;
 }
 
 interface RawgSearchResponse {
@@ -23,7 +24,7 @@ export const rawgClient = {
 
     try {
       const response = await fetch(
-        `${BASE_URL}/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=10`
+        `${BASE_URL}/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=20`
       );
 
       if (!response.ok) {
@@ -32,17 +33,22 @@ export const rawgClient = {
 
       const data: RawgSearchResponse = await response.json();
 
-      return data.results.map((game) => ({
-        externalId: game.id.toString(),
-        type: 'GAME',
-        title: game.name,
-        coverUrl: game.background_image,
-        releaseDate: game.released ? game.released.split('-')[0] : undefined,
-        metadata: {
-          platforms: game.platforms?.map((p) => p.platform.name) || [],
-          rawgRating: game.rating,
-        },
-      }));
+      return data.results
+
+        .filter((game) => game.rating > 0)
+        .slice(0, 8)
+        .map((game) => ({
+          externalId: game.id.toString(),
+          type: 'GAME',
+          title: game.name,
+          coverUrl: game.background_image,
+          releaseDate: game.released ? game.released.split('-')[0] : undefined,
+          metadata: {
+            platforms: game.platforms?.map((p) => p.platform.name) || [],
+            rawgRating: game.rating,
+          },
+          popularityScore: Math.min(game.added / 100, 100),
+        }));
     } catch (error) {
       console.error('Błąd w rawgClient:', error);
       return [];

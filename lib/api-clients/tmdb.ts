@@ -14,6 +14,8 @@ interface TmdbResult {
   release_date?: string;
   first_air_date?: string;
   overview: string;
+  vote_count: number;
+  popularity: number;
 }
 
 interface TmdbSearchResponse {
@@ -36,7 +38,15 @@ export const tmdbClient = {
       const data: TmdbSearchResponse = await response.json();
 
       return data.results
-        .filter((item) => item.media_type === 'movie' || item.media_type === 'tv')
+        .filter((item) => {
+          const isMedia = item.media_type === 'movie' || item.media_type === 'tv';
+          const isPopularEnough = item.vote_count > 10 || item.popularity > 5;
+          const hasPoster = !!item.poster_path;
+
+          return isMedia && isPopularEnough && hasPoster;
+        })
+        .sort((a, b) => b.popularity - a.popularity)
+        .slice(0, 8)
         .map((item) => {
           const isMovie = item.media_type === 'movie';
 
@@ -50,6 +60,7 @@ export const tmdbClient = {
               overview: item.overview,
               originalType: item.media_type,
             },
+            popularityScore: Math.min(item.popularity, 100),
           };
         });
     } catch (error) {

@@ -15,6 +15,7 @@ interface GoogleBookVolumeInfo {
     thumbnail: string;
     smallThumbnail?: string;
   };
+  ratingsCount?: number;
 }
 
 interface GoogleBookResult {
@@ -32,7 +33,7 @@ export const googleBooksClient = {
 
     try {
       const response = await fetch(
-        `${BASE_URL}?q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=10&printType=books`
+        `${BASE_URL}?q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=20&printType=books`
       );
 
       if (!response.ok) {
@@ -43,27 +44,36 @@ export const googleBooksClient = {
 
       if (!data.items) return [];
 
-      return data.items.map((item) => {
-        const info = item.volumeInfo;
+      return data.items
+        .filter((item) => {
+          const info = item.volumeInfo;
+          return info.authors && info.authors.length > 0 && info.imageLinks;
+        })
+        .slice(0, 8)
+        .map((item) => {
+          const info = item.volumeInfo;
 
-        const secureCoverUrl = info.imageLinks?.thumbnail
-          ? info.imageLinks.thumbnail.replace('http:', 'https:')
-          : null;
+          const secureCoverUrl = info.imageLinks?.thumbnail
+            ? info.imageLinks.thumbnail.replace('http:', 'https:')
+            : null;
 
-        return {
-          externalId: item.id,
-          type: 'BOOK',
-          title: info.title,
-          coverUrl: secureCoverUrl,
-          releaseDate: info.publishedDate?.split('-')[0],
-          metadata: {
-            author: info.authors?.join(', ') || 'Unknown Author',
-            pageCount: info.pageCount,
-            categories: info.categories,
-            description: info.description ? info.description.substring(0, 200) + '...' : '',
-          },
-        };
-      });
+          const score = 30 + (info.ratingsCount ? Math.min(info.ratingsCount / 10, 70) : 0);
+
+          return {
+            externalId: item.id,
+            type: 'BOOK',
+            title: info.title,
+            coverUrl: secureCoverUrl,
+            releaseDate: info.publishedDate?.split('-')[0],
+            metadata: {
+              author: info.authors?.join(', ') || 'Unknown Author',
+              pageCount: info.pageCount,
+              categories: info.categories,
+              description: info.description ? info.description.substring(0, 200) + '...' : '',
+            },
+            popularityScore: score,
+          };
+        });
     } catch (error) {
       console.error('Błąd w googleBooksClient:', error);
       return [];

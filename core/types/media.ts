@@ -8,4 +8,5 @@ export interface UnifiedMediaItem {
   releaseDate?: string;
   metadata: Record<string, any>;
   isAdded?: boolean;
+  popularityScore?: number;
 }

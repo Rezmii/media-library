@@ -17,6 +17,7 @@ interface SpotifyAlbum {
   images: SpotifyImage[];
   artists: { name: string }[];
   external_urls: { spotify: string };
+  popularity: number;
 }
 
 interface SpotifySearchResponse {
@@ -78,8 +79,16 @@ export const spotifyClient = {
       const data: SpotifySearchResponse = await response.json();
 
       return data.albums.items
-        .filter((album) => album.album_type === 'album')
-        .slice(0, 10)
+        .filter((album) => {
+          const title = album.name.toLowerCase();
+          const isJunk =
+            title.includes('karaoke') ||
+            title.includes('tribute to') ||
+            title.includes('cover version');
+
+          return album.album_type === 'album' && !isJunk;
+        })
+        .slice(0, 8)
         .map((album) => ({
           externalId: album.id,
           type: 'ALBUM',
@@ -90,11 +99,12 @@ export const spotifyClient = {
             artist: album.artists.map((a) => a.name).join(', '),
             spotifyUrl: album.external_urls.spotify,
             subtype: album.album_type,
+            popularityScore: album.popularity,
           },
         }));
     } catch (error) {
       console.error('Błąd w spotifyClient:', error);
-      return []; // Zwracamy pustą listę zamiast wywalać całą aplikację
+      return [];
     }
   },
 };
