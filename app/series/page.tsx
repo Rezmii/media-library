@@ -1,4 +1,4 @@
-import { LayoutGrid } from 'lucide-react';
+import { Tv } from 'lucide-react';
 
 import { UnifiedMediaItem } from '@/core/types/media';
 
@@ -6,9 +6,8 @@ import { mediaRepository } from '@/lib/db/media-repository';
 
 import { LibraryView } from '@/components/domain/library-view';
 
-export default async function Dashboard() {
-  // Tutaj pobieramy WSZYSTKO (bez filtra)
-  const dbItems = await mediaRepository.getAll();
+export default async function SeriesPage() {
+  const dbItems = await mediaRepository.getAll('SERIES');
 
   const items: UnifiedMediaItem[] = dbItems.map((dbItem) => ({
     externalId: dbItem.id,
@@ -19,5 +18,5 @@ export default async function Dashboard() {
     releaseDate: dbItem.createdAt.getFullYear().toString(),
   }));
 
-  return <LibraryView title="Biblioteka" items={items} icon={<LayoutGrid className="h-8 w-8" />} />;
+  return <LibraryView title="Seriale" items={items} icon={<Tv className="h-8 w-8" />} />;
 }

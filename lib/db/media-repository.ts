@@ -30,8 +30,9 @@ export type CreateMediaInput = {
 
 export const mediaRepository = {
   // Pobieranie wszystkich elementów (z opcją filtrowania w przyszłości)
-  getAll: async () => {
+  getAll: async (type?: MediaType) => {
     return await db.mediaItem.findMany({
+      where: type ? { type } : undefined,
       include: {
         tags: true,
       },
