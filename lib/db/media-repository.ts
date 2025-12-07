@@ -1,22 +1,22 @@
 // lib/db/media-repository.ts
+import { PrismaPg } from '@prisma/adapter-pg';
 import { MediaType, Prisma, PrismaClient, Status } from '@prisma/client';
 
-// Singleton dla Prismy (zapobiega tworzeniu wielu połączeń w dev mode)
-const prismaClientSingleton = () => {
-  return new PrismaClient();
-};
-
-type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+});
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClientSingleton | undefined;
+  prisma: PrismaClient | undefined;
 };
 
-const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+export const db =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    adapter,
+  });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
-
-export const db = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
 
 // --- REPOZYTORIUM ---
 
@@ -49,7 +49,7 @@ export const mediaRepository = {
         type: data.type,
         coverUrl: data.coverUrl,
         metadata: data.metadata ?? Prisma.JsonNull,
-        status: Status.BACKLOG, // Domyślnie wpada do "Do zrobienia"
+        status: Status.BACKLOG,
         tags: {
           connectOrCreate: data.tags?.map((tag) => ({
             where: { name: tag },

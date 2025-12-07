@@ -7,4 +7,5 @@ export interface UnifiedMediaItem {
   type: MediaType;
   releaseDate?: string;
   metadata: Record<string, any>;
+  isAdded?: boolean;
 }
