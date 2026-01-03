@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { MediaType } from '@prisma/client';
 import Fuse from 'fuse.js';
 
 import { UnifiedMediaItem } from '@/core/types/media';
@@ -26,18 +27,43 @@ async function getExistingLibraryIds(): Promise<Set<string>> {
   return ids;
 }
 
-export async function searchMediaAction(query: string): Promise<UnifiedMediaItem[]> {
+export async function searchMediaAction(
+  query: string,
+  typeFilter?: MediaType | 'ALL'
+): Promise<UnifiedMediaItem[]> {
   if (!query || query.length < 2) return [];
 
-  try {
-    const [albums, games, movies, books] = await Promise.all([
-      spotifyClient.searchAlbums(query),
-      rawgClient.searchGames(query),
-      tmdbClient.searchMoviesAndSeries(query),
-      googleBooksClient.searchBooks(query),
-    ]);
+  const safeType = typeFilter || 'ALL';
 
-    const rawResults = [...games, ...movies, ...albums, ...books];
+  try {
+    let rawResults: UnifiedMediaItem[] = [];
+
+    const promises = [];
+
+    if (safeType === 'ALL' || safeType === 'GAME') {
+      promises.push(rawgClient.searchGames(query));
+    }
+
+    if (safeType === 'ALL' || safeType === 'MOVIE' || safeType === 'SERIES') {
+      promises.push(
+        tmdbClient.searchMoviesAndSeries(query).then((results) => {
+          if (safeType === 'MOVIE') return results.filter((r) => r.type === 'MOVIE');
+          if (safeType === 'SERIES') return results.filter((r) => r.type === 'SERIES');
+          return results;
+        })
+      );
+    }
+
+    if (safeType === 'ALL' || safeType === 'ALBUM') {
+      promises.push(spotifyClient.searchAlbums(query));
+    }
+
+    if (safeType === 'ALL' || safeType === 'BOOK') {
+      promises.push(googleBooksClient.searchBooks(query));
+    }
+
+    const resultsArrays = await Promise.all(promises);
+    rawResults = resultsArrays.flat();
 
     const fuse = new Fuse(rawResults, {
       keys: [

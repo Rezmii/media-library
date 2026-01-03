@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useTransition } from 'react';
 
+import { usePathname } from 'next/navigation';
+
 import { addToLibraryAction, searchMediaAction } from '@/actions/media-actions';
+import { MediaType } from '@prisma/client';
 import { Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,17 +21,29 @@ interface SearchDialogProps {
 }
 
 export function SearchDialog({ children }: SearchDialogProps) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UnifiedMediaItem[]>([]);
   const [isSearching, startTransition] = useTransition();
   const [isAdding, setIsAdding] = useState<string | null>(null);
 
+  const getSearchContext = (): { type: MediaType | 'ALL'; label: string } => {
+    if (pathname.startsWith('/games')) return { type: 'GAME', label: 'gry' };
+    if (pathname.startsWith('/movies')) return { type: 'MOVIE', label: 'filmu' };
+    if (pathname.startsWith('/series')) return { type: 'SERIES', label: 'serialu' };
+    if (pathname.startsWith('/books')) return { type: 'BOOK', label: 'książki' };
+    if (pathname.startsWith('/music')) return { type: 'ALBUM', label: 'albumu' };
+    return { type: 'ALL', label: 'gry, filmu, książki...' };
+  };
+
+  const context = getSearchContext();
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query.length >= 2) {
         startTransition(async () => {
-          const data = await searchMediaAction(query);
+          const data = await searchMediaAction(query, context.type);
           setResults(data);
         });
       } else {
@@ -37,7 +52,14 @@ export function SearchDialog({ children }: SearchDialogProps) {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, context.type]);
+
+  useEffect(() => {
+    if (!open) {
+      setQuery('');
+      setResults([]);
+    }
+  }, [open]);
 
   // Obsługa dodawania
   const handleAdd = async (item: UnifiedMediaItem) => {
@@ -69,7 +91,7 @@ export function SearchDialog({ children }: SearchDialogProps) {
           <div className="relative">
             <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-zinc-500" />
             <Input
-              placeholder="Wpisz tytuł gry, filmu, książki lub albumu..."
+              placeholder={`Wpisz tytuł ${context.label}...`}
               className="h-12 border-zinc-800 bg-zinc-900/50 pl-10 text-lg focus-visible:ring-emerald-500/50"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
