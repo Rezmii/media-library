@@ -61,6 +61,7 @@ export function StatusSelector({ id, currentStatus }: StatusSelectorProps) {
             statusConfig[currentStatus].color
           )}
           disabled={isUpdating}
+          onClick={(e) => e.stopPropagation()}
         >
           {isUpdating ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -77,7 +78,10 @@ export function StatusSelector({ id, currentStatus }: StatusSelectorProps) {
           return (
             <DropdownMenuItem
               key={status}
-              onClick={() => handleStatusChange(status)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStatusChange(status);
+              }}
               className="cursor-pointer gap-2 focus:bg-zinc-900"
             >
               <Icon className={cn('h-4 w-4', config.color)} />

@@ -4,17 +4,22 @@ import { UnifiedMediaItem } from '@/core/types/media';
 const API_KEY = process.env.TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+const BACKDROP_BASE_URL = 'https://image.tmdb.org/t/p/w1280';
 
 interface TmdbResult {
   id: number;
   media_type: 'movie' | 'tv';
   title?: string;
   name?: string;
+  original_title?: string;
+  original_name?: string;
   poster_path: string | null;
+  backdrop_path: string | null;
   release_date?: string;
   first_air_date?: string;
   overview: string;
   vote_count: number;
+  vote_average: number;
   popularity: number;
 }
 
@@ -28,7 +33,7 @@ export const tmdbClient = {
 
     try {
       const response = await fetch(
-        `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`
+        `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&language=pl-PL`
       );
 
       if (!response.ok) {
@@ -59,6 +64,9 @@ export const tmdbClient = {
             metadata: {
               overview: item.overview,
               originalType: item.media_type,
+              originalTitle: isMovie ? item.original_title : item.original_name,
+              tmdbRating: item.vote_average.toFixed(1),
+              backdropUrl: item.backdrop_path ? `${BACKDROP_BASE_URL}${item.backdrop_path}` : null,
             },
             popularityScore: Math.min(item.popularity, 100),
           };

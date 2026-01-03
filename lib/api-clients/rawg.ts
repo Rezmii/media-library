@@ -9,9 +9,12 @@ interface RawgGame {
   name: string;
   background_image: string;
   released: string;
-  platforms: { platform: { name: string } }[];
+  parent_platforms: { platform: { name: string } }[];
   rating: number;
   added: number;
+  metacritic: number | null;
+  playtime: number;
+  genres: { name: string }[];
 }
 
 interface RawgSearchResponse {
@@ -44,8 +47,11 @@ export const rawgClient = {
           coverUrl: game.background_image,
           releaseDate: game.released ? game.released.split('-')[0] : undefined,
           metadata: {
-            platforms: game.platforms?.map((p) => p.platform.name) || [],
-            rawgRating: game.rating,
+            platforms: game.parent_platforms?.map((p) => p.platform.name) || [],
+            rawgRating: game.rating.toFixed(2),
+            metacritic: game.metacritic,
+            playtime: game.playtime,
+            categories: game.genres?.map((g) => g.name),
           },
           popularityScore: Math.min(game.added / 100, 100),
         }));

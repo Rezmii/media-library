@@ -11,4 +11,7 @@ export interface UnifiedMediaItem {
   popularityScore?: number;
 
   status?: Status;
+
+  note?: string | null;
+  rating?: number | null;
 }

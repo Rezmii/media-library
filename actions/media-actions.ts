@@ -13,6 +13,15 @@ import { spotifyClient } from '@/lib/api-clients/spotify';
 import { tmdbClient } from '@/lib/api-clients/tmdb';
 import { mediaRepository } from '@/lib/db/media-repository';
 
+function revalidatePaths() {
+  revalidatePath('/');
+  revalidatePath('/games');
+  revalidatePath('/movies');
+  revalidatePath('/series');
+  revalidatePath('/books');
+  revalidatePath('/music');
+}
+
 async function getExistingLibraryIds(): Promise<Set<string>> {
   const allItems = await mediaRepository.getAll();
   const ids = new Set<string>();
@@ -113,12 +122,7 @@ export async function addToLibraryAction(item: UnifiedMediaItem) {
       tags: autoTags,
     });
 
-    revalidatePath('/');
-    revalidatePath('/games');
-    revalidatePath('/movies');
-    revalidatePath('/books');
-    revalidatePath('/albums');
-    revalidatePath('/series');
+    revalidatePaths();
 
     return { success: true };
   } catch (error) {
@@ -131,16 +135,28 @@ export async function updateStatusAction(id: string, status: Status) {
   try {
     await mediaRepository.updateStatus(id, status);
 
-    revalidatePath('/');
-    revalidatePath('/games');
-    revalidatePath('/movies');
-    revalidatePath('/series');
-    revalidatePath('/books');
-    revalidatePath('/music');
+    revalidatePaths();
 
     return { success: true };
   } catch (error) {
     console.error('Błąd zmiany statusu:', error);
     return { success: false, error: 'Nie udało się zmienić statusu' };
+  }
+}
+
+export async function updateMediaDetailsAction(
+  id: string,
+  rating: number | null,
+  note: string | null
+) {
+  try {
+    await mediaRepository.updateDetails(id, { rating, note });
+
+    revalidatePaths();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd aktualizacji detali:', error);
+    return { success: false, error: 'Nie udało się zapisać.' };
   }
 }

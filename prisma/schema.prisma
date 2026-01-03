@@ -38,6 +38,7 @@ model MediaItem {
   title       String
   coverUrl    String?   // Może być null, jeśli jeszcze nie pobraliśmy okładki
   rating      Int?      // Twoja ocena 1-5 (opcjonalna)
+  note        String?   // Twoja notatka (opcjonalna)
 
   metadata    Json?     
 

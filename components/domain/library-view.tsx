@@ -8,6 +8,8 @@ import { MediaCard } from '@/components/domain/media-card';
 import { SearchDialog } from '@/components/domain/search-dialog';
 import { Button } from '@/components/ui/button';
 
+import { MediaDetailsDialog } from './media-details-dialog';
+
 interface LibraryViewProps {
   title: string;
   items: UnifiedMediaItem[];
@@ -56,7 +58,9 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
       {items.length > 0 && (
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {items.map((item) => (
-            <MediaCard key={item.externalId} item={item} isAdded={true} />
+            <MediaDetailsDialog key={item.externalId} item={item}>
+              <MediaCard item={item} isAdded={true} />
+            </MediaDetailsDialog>
           ))}
         </div>
       )}

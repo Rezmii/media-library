@@ -68,4 +68,14 @@ export const mediaRepository = {
       data: { status },
     });
   },
+
+  updateDetails: async (id: string, data: { rating: number | null; note: string | null }) => {
+    return db.mediaItem.update({
+      where: { id },
+      data: {
+        rating: data.rating,
+        note: data.note,
+      },
+    });
+  },
 };
