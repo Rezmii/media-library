@@ -16,6 +16,7 @@ export default async function SeriesPage() {
     coverUrl: dbItem.coverUrl,
     metadata: (dbItem.metadata as Record<string, any>) || {},
     releaseDate: dbItem.createdAt.getFullYear().toString(),
+    status: dbItem.status,
   }));
 
   return <LibraryView title="Seriale" items={items} icon={<Tv className="h-8 w-8" />} />;

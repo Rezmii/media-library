@@ -37,7 +37,7 @@ export const mediaRepository = {
         tags: true,
       },
       orderBy: {
-        updatedAt: 'desc',
+        createdAt: 'desc',
       },
     });
   },

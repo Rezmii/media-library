@@ -17,6 +17,7 @@ export default async function Dashboard() {
     coverUrl: dbItem.coverUrl,
     metadata: (dbItem.metadata as Record<string, any>) || {},
     releaseDate: dbItem.createdAt.getFullYear().toString(),
+    status: dbItem.status,
   }));
 
   return <LibraryView title="Biblioteka" items={items} icon={<LayoutGrid className="h-8 w-8" />} />;

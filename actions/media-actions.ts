@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { MediaType } from '@prisma/client';
+import { MediaType, Status } from '@prisma/client';
 import Fuse from 'fuse.js';
 
 import { UnifiedMediaItem } from '@/core/types/media';
@@ -124,5 +124,23 @@ export async function addToLibraryAction(item: UnifiedMediaItem) {
   } catch (error) {
     console.error('Błąd dodawania:', error);
     return { success: false, error: 'Nie udało się dodać elementu' };
+  }
+}
+
+export async function updateStatusAction(id: string, status: Status) {
+  try {
+    await mediaRepository.updateStatus(id, status);
+
+    revalidatePath('/');
+    revalidatePath('/games');
+    revalidatePath('/movies');
+    revalidatePath('/series');
+    revalidatePath('/books');
+    revalidatePath('/music');
+
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd zmiany statusu:', error);
+    return { success: false, error: 'Nie udało się zmienić statusu' };
   }
 }

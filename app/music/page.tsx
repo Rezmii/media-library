@@ -16,6 +16,7 @@ export default async function MusicPage() {
     coverUrl: dbItem.coverUrl,
     metadata: (dbItem.metadata as Record<string, any>) || {},
     releaseDate: dbItem.createdAt.getFullYear().toString(),
+    status: dbItem.status,
   }));
 
   return <LibraryView title="Albumy" items={items} icon={<Disc className="h-8 w-8" />} />;

@@ -16,6 +16,7 @@ export default async function MoviesPage() {
     coverUrl: dbItem.coverUrl,
     metadata: (dbItem.metadata as Record<string, any>) || {},
     releaseDate: dbItem.createdAt.getFullYear().toString(),
+    status: dbItem.status,
   }));
 
   return <LibraryView title="Filmy" items={items} icon={<Film className="h-8 w-8" />} />;

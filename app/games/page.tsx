@@ -16,6 +16,7 @@ export default async function GamesPage() {
     coverUrl: dbItem.coverUrl,
     metadata: (dbItem.metadata as Record<string, any>) || {},
     releaseDate: dbItem.createdAt.getFullYear().toString(),
+    status: dbItem.status,
   }));
 
   return <LibraryView title="Gry" items={items} icon={<Gamepad2 className="h-8 w-8" />} />;

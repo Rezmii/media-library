@@ -1,4 +1,4 @@
-import { MediaType } from '@prisma/client';
+import { MediaType, Status } from '@prisma/client';
 
 export interface UnifiedMediaItem {
   externalId: string;
@@ -9,4 +9,6 @@ export interface UnifiedMediaItem {
   metadata: Record<string, any>;
   isAdded?: boolean;
   popularityScore?: number;
+
+  status?: Status;
 }

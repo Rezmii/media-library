@@ -16,6 +16,7 @@ export default async function BooksPage() {
     coverUrl: dbItem.coverUrl,
     metadata: (dbItem.metadata as Record<string, any>) || {},
     releaseDate: dbItem.createdAt.getFullYear().toString(),
+    status: dbItem.status,
   }));
 
   return <LibraryView title="Książki" items={items} icon={<BookOpen className="h-8 w-8" />} />;
