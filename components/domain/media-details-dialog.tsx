@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 
 import { updateMediaDetailsAction } from '@/actions/media-actions';
-import { AlignLeft, Calendar, Clock, Save } from 'lucide-react';
+import { AlignLeft, BookOpen, Calendar, Clock, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { UnifiedMediaItem } from '@/core/types/media';
@@ -117,6 +117,22 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
                       {item.metadata.tmdbRating}
                     </span>
                   )}
+
+                  {item.metadata.googleRating && (
+                    <span className="flex items-center gap-1 rounded border border-zinc-700 bg-zinc-800 px-2 py-1 font-bold text-zinc-200">
+                      <span className="mr-1 text-xs text-zinc-500 uppercase">Google</span>
+                      <span className="text-lg text-zinc-300">{item.metadata.googleRating}</span>
+                      <span className="text-xs text-zinc-500">/5</span>
+                    </span>
+                  )}
+
+                  {item.metadata.pageCount > 0 && (
+                    <span className="flex items-center gap-2 text-zinc-400">
+                      <BookOpen className="h-4 w-4" />
+                      {item.metadata.pageCount} str.
+                    </span>
+                  )}
+
                   {item.metadata.metacritic && (
                     <span className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-1">
                       <span className="mr-1 text-sm uppercase">Metascore</span>

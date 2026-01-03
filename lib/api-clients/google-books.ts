@@ -11,11 +11,17 @@ interface GoogleBookVolumeInfo {
   description?: string;
   pageCount?: number;
   categories?: string[];
-  imageLinks?: {
-    thumbnail: string;
-    smallThumbnail?: string;
-  };
+  averageRating?: number; // <--- Nowe pole
   ratingsCount?: number;
+  language?: string;
+  imageLinks?: {
+    smallThumbnail?: string;
+    thumbnail?: string;
+    small?: string;
+    medium?: string;
+    large?: string;
+    extraLarge?: string;
+  };
 }
 
 interface GoogleBookResult {
@@ -25,6 +31,26 @@ interface GoogleBookResult {
 
 interface GoogleBooksResponse {
   items?: GoogleBookResult[];
+}
+
+function getBestQualityCover(imageLinks?: GoogleBookVolumeInfo['imageLinks']): string | null {
+  if (!imageLinks) return null;
+
+  let url =
+    imageLinks.extraLarge ||
+    imageLinks.large ||
+    imageLinks.medium ||
+    imageLinks.small ||
+    imageLinks.thumbnail ||
+    imageLinks.smallThumbnail;
+
+  if (!url) return null;
+
+  url = url.replace('http:', 'https:');
+
+  url = url.replace('&edge=curl', '');
+
+  return url;
 }
 
 export const googleBooksClient = {
@@ -53,9 +79,7 @@ export const googleBooksClient = {
         .map((item) => {
           const info = item.volumeInfo;
 
-          const secureCoverUrl = info.imageLinks?.thumbnail
-            ? info.imageLinks.thumbnail.replace('http:', 'https:')
-            : null;
+          const secureCoverUrl = getBestQualityCover(info.imageLinks);
 
           const score = 30 + (info.ratingsCount ? Math.min(info.ratingsCount / 10, 70) : 0);
 
@@ -70,6 +94,8 @@ export const googleBooksClient = {
               pageCount: info.pageCount,
               categories: info.categories,
               description: info.description ? info.description.substring(0, 200) + '...' : '',
+              googleRating: info.averageRating,
+              language: info.language,
             },
             popularityScore: score,
           };
