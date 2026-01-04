@@ -103,4 +103,10 @@ export const mediaRepository = {
       },
     });
   },
+
+  delete: async (id: string) => {
+    return db.mediaItem.delete({
+      where: { id },
+    });
+  },
 };

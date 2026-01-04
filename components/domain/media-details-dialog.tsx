@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 
+import { DeleteMediaButton } from './delete-media-button';
 import { MediaBadge } from './media-badge';
 import { StarRating } from './star-rating';
 import { StatusSelector } from './status-selector';
@@ -257,7 +258,14 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
           </div>
 
           {item.isAdded && (
-            <div className="flex justify-end border-t border-zinc-800 bg-zinc-950/80 p-6 backdrop-blur-sm">
+            <div className="flex justify-end gap-2 border-t border-zinc-800 bg-zinc-950/80 p-6 backdrop-blur-sm">
+              <DeleteMediaButton
+                id={item.externalId}
+                title={item.title}
+                size="lg"
+                onSuccess={() => setOpen(false)}
+                className="text-zinc-500 hover:bg-red-950/30 hover:text-red-400"
+              />
               <Button
                 onClick={handleSave}
                 disabled={isSaving}

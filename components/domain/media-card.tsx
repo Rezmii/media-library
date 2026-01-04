@@ -3,6 +3,7 @@
 import Image from 'next/image';
 
 import { Check, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { UnifiedMediaItem } from '@/core/types/media';
 
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 
+import { DeleteMediaButton } from './delete-media-button';
 import { MediaBadge } from './media-badge';
 import { StatusSelector } from './status-selector';
 
@@ -96,11 +98,20 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
         )}
 
         {item.status ? (
-          <div className="absolute top-2 right-2 left-2 z-10 flex items-start justify-between">
-            <MediaBadge type={item.type} />
+          <>
+            <div className="absolute top-2 right-2 left-2 z-10 flex items-start justify-between">
+              <MediaBadge type={item.type} />
 
-            <StatusSelector id={item.externalId} currentStatus={item.status} />
-          </div>
+              <StatusSelector id={item.externalId} currentStatus={item.status} />
+            </div>
+            <div className="absolute right-2 bottom-2 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <DeleteMediaButton
+                id={item.externalId}
+                title={item.title}
+                className="h-8 w-8 rounded-full border border-white/10 bg-black/60 text-zinc-400 shadow-sm backdrop-blur-md hover:border-red-500/50 hover:bg-red-950/80 hover:text-red-400"
+              />
+            </div>
+          </>
         ) : (
           <div className="absolute top-2 left-2 opacity-90">
             <MediaBadge type={item.type} />

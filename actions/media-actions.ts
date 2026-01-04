@@ -188,3 +188,17 @@ export async function removeTagAction(itemId: string, tagName: string) {
     return { success: false };
   }
 }
+
+export async function deleteMediaAction(id: string) {
+  try {
+    await mediaRepository.delete(id);
+
+    // Odświeżamy wszystko
+    revalidatePaths();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd usuwania:', error);
+    return { success: false, error: 'Nie udało się usunąć elementu' };
+  }
+}
