@@ -69,6 +69,7 @@ export const tmdbClient = {
               backdropUrl: item.backdrop_path ? `${BACKDROP_BASE_URL}${item.backdrop_path}` : null,
             },
             popularityScore: Math.min(item.popularity, 100),
+            tags: [isMovie ? 'Film' : 'Serial'],
           };
         });
     } catch (error) {

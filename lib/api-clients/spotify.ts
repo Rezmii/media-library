@@ -112,6 +112,7 @@ export const spotifyClient = {
               subtype: album.album_type,
               popularityScore: album.popularity,
             },
+            tags: ['Muzyka', album.album_type],
           };
         });
     } catch (error) {

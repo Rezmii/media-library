@@ -35,6 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MediaBadge } from './media-badge';
 import { StarRating } from './star-rating';
 import { StatusSelector } from './status-selector';
+import { TagManager } from './tag-manager';
 
 interface MediaDetailsDialogProps {
   item: UnifiedMediaItem;
@@ -244,7 +245,15 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
               </div>
             )}
 
-            <div className="h-10" />
+            <hr className="border-zinc-800" />
+
+            {item.isAdded && (
+              <>
+                <div className="space-y-2">
+                  <TagManager itemId={item.externalId} initialTags={item.tags} />
+                </div>
+              </>
+            )}
           </div>
 
           {item.isAdded && (

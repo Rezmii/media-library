@@ -54,6 +54,7 @@ export const rawgClient = {
             categories: game.genres?.map((g) => g.name),
           },
           popularityScore: Math.min(game.added / 100, 100),
+          tags: game.genres?.map((g) => g.name) || [],
         }));
     } catch (error) {
       console.error('Błąd w rawgClient:', error);

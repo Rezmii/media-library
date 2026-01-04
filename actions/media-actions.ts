@@ -160,3 +160,31 @@ export async function updateMediaDetailsAction(
     return { success: false, error: 'Nie udało się zapisać.' };
   }
 }
+
+export async function addTagAction(itemId: string, tagName: string) {
+  try {
+    const normalizedTag = tagName.trim();
+    if (!normalizedTag) return { success: false };
+
+    await mediaRepository.addTag(itemId, normalizedTag);
+
+    revalidatePaths();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd dodawania tagu:', error);
+    return { success: false };
+  }
+}
+
+// AKCJA: Usuń Tag
+export async function removeTagAction(itemId: string, tagName: string) {
+  try {
+    await mediaRepository.removeTag(itemId, tagName);
+    revalidatePaths();
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd usuwania tagu:', error);
+    return { success: false };
+  }
+}

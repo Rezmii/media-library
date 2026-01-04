@@ -14,4 +14,6 @@ export interface UnifiedMediaItem {
 
   note?: string | null;
   rating?: number | null;
+
+  tags: string[];
 }

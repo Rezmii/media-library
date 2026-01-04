@@ -17,5 +17,6 @@ export function mapDatabaseItemToUnified(dbItem: DbMediaItem): UnifiedMediaItem 
     metadata: (dbItem.metadata as Record<string, any>) || {},
     releaseDate: dbItem.createdAt.getFullYear().toString(),
     isAdded: true,
+    tags: dbItem.tags?.map((tag) => tag.name) || [],
   };
 }

@@ -78,4 +78,29 @@ export const mediaRepository = {
       },
     });
   },
+
+  addTag: async (mediaId: string, tagName: string) => {
+    return db.mediaItem.update({
+      where: { id: mediaId },
+      data: {
+        tags: {
+          connectOrCreate: {
+            where: { name: tagName },
+            create: { name: tagName },
+          },
+        },
+      },
+    });
+  },
+
+  removeTag: async (mediaId: string, tagName: string) => {
+    return db.mediaItem.update({
+      where: { id: mediaId },
+      data: {
+        tags: {
+          disconnect: { name: tagName },
+        },
+      },
+    });
+  },
 };

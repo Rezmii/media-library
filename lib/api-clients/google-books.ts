@@ -98,6 +98,7 @@ export const googleBooksClient = {
               language: info.language,
             },
             popularityScore: score,
+            tags: info.categories || [],
           };
         });
     } catch (error) {
