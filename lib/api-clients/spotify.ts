@@ -9,15 +9,21 @@ interface SpotifyImage {
   width: number;
 }
 
+interface SpotifyArtist {
+  name: string;
+  id: string;
+}
+
 interface SpotifyAlbum {
   id: string;
   name: string;
+  artists: SpotifyArtist[];
   album_type: 'album' | 'single' | 'compilation';
   release_date: string;
+  total_tracks: number;
   images: SpotifyImage[];
-  artists: { name: string }[];
   external_urls: { spotify: string };
-  popularity: number;
+  popularity?: number;
 }
 
 interface SpotifySearchResponse {
@@ -64,6 +70,7 @@ export const spotifyClient = {
         q: query,
         type: 'album',
         limit: '20',
+        market: 'PL',
       });
 
       const response = await fetch(`https://api.spotify.com/v1/search?${params}`, {
@@ -89,19 +96,24 @@ export const spotifyClient = {
           return album.album_type === 'album' && !isJunk;
         })
         .slice(0, 8)
-        .map((album) => ({
-          externalId: album.id,
-          type: 'ALBUM',
-          title: album.name,
-          coverUrl: album.images[0]?.url ?? null,
-          releaseDate: album.release_date.split('-')[0],
-          metadata: {
-            artist: album.artists.map((a) => a.name).join(', '),
-            spotifyUrl: album.external_urls.spotify,
-            subtype: album.album_type,
-            popularityScore: album.popularity,
-          },
-        }));
+        .map((album) => {
+          const coverUrl = album.images[0]?.url || null;
+          const allArtists = album.artists.map((a) => a.name);
+          return {
+            externalId: album.id,
+            type: 'ALBUM',
+            title: album.name,
+            coverUrl: coverUrl,
+            releaseDate: album.release_date.split('-')[0],
+            metadata: {
+              artist: allArtists.join(', '),
+              totalTracks: album.total_tracks,
+              spotifyUrl: album.external_urls.spotify,
+              subtype: album.album_type,
+              popularityScore: album.popularity,
+            },
+          };
+        });
     } catch (error) {
       console.error('Błąd w spotifyClient:', error);
       return [];

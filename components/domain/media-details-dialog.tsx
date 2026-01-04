@@ -5,7 +5,17 @@ import { useState } from 'react';
 import Image from 'next/image';
 
 import { updateMediaDetailsAction } from '@/actions/media-actions';
-import { AlignLeft, BookOpen, Calendar, Clock, Save } from 'lucide-react';
+import {
+  AlignLeft,
+  BookOpen,
+  Calendar,
+  Clock,
+  Disc,
+  ExternalLink,
+  Mic2,
+  Music2,
+  Save,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { UnifiedMediaItem } from '@/core/types/media';
@@ -133,6 +143,13 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
                     </span>
                   )}
 
+                  {item.metadata.totalTracks && (
+                    <span className="flex items-center gap-2 text-zinc-400">
+                      <Disc className="h-4 w-4" />
+                      {item.metadata.totalTracks} utw.
+                    </span>
+                  )}
+
                   {item.metadata.metacritic && (
                     <span className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-1">
                       <span className="mr-1 text-sm uppercase">Metascore</span>
@@ -163,6 +180,24 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
                   </span>
                 </div>
               </div>
+              {item.type === 'ALBUM' && (
+                <div className="mt-6 space-y-4">
+                  {/* Link do Spotify */}
+                  {item.metadata.spotifyUrl && (
+                    <div className="pt-2">
+                      <a
+                        href={item.metadata.spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 font-semibold text-[#1DB954] transition-colors hover:text-[#1ed760]"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Otwórz w Spotify
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="h-px w-full bg-zinc-800/50" />
