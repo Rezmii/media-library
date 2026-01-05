@@ -27,7 +27,7 @@ export const rawgClient = {
 
     try {
       const response = await fetch(
-        `${BASE_URL}/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=20`
+        `${BASE_URL}/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=40`
       );
 
       if (!response.ok) {
@@ -39,7 +39,7 @@ export const rawgClient = {
       return data.results
 
         .filter((game) => game.rating > 0)
-        .slice(0, 8)
+        .slice(0, 15)
         .map((game) => ({
           externalId: game.id.toString(),
           type: 'GAME',

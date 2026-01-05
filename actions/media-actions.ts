@@ -76,14 +76,18 @@ export async function searchMediaAction(
 
     const fuse = new Fuse(rawResults, {
       keys: [
-        { name: 'title', weight: 0.7 },
-        { name: 'type', weight: 0.1 },
-        { name: 'metadata.artist', weight: 0.2 },
-        { name: 'metadata.author', weight: 0.2 },
+        { name: 'title', weight: 1.0 }, // Tytuł najważniejszy
+        { name: 'metadata.originalTitle', weight: 0.8 }, // Oryginalny tytuł (dla filmów)
+        { name: 'metadata.author', weight: 0.8 }, // Autor książki
+        { name: 'metadata.artist', weight: 0.7 }, // Artysta muzyczny
+        { name: 'metadata.director', weight: 0.6 }, // Reżyser (jeśli dodamy w przyszłości)
+        { name: 'metadata.actors', weight: 0.5 }, // Aktorzy (jeśli dodamy)
+        { name: 'metadata.description', weight: 0.1 }, // Opis (mała waga, ale może pomóc)
       ],
       includeScore: true,
-      threshold: 0.4,
+      threshold: 0.6,
       ignoreLocation: true,
+      ignoreDiacritics: true,
     });
 
     const fusedResults = fuse.search(query);

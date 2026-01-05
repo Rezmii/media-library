@@ -1,4 +1,3 @@
-// lib/api-clients/google-books.ts
 import { UnifiedMediaItem } from '@/core/types/media';
 
 const API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
@@ -11,7 +10,7 @@ interface GoogleBookVolumeInfo {
   description?: string;
   pageCount?: number;
   categories?: string[];
-  averageRating?: number; // <--- Nowe pole
+  averageRating?: number;
   ratingsCount?: number;
   language?: string;
   imageLinks?: {
@@ -58,27 +57,34 @@ export const googleBooksClient = {
     if (!API_KEY) throw new Error('Brak GOOGLE_BOOKS_API_KEY w .env');
 
     try {
-      const response = await fetch(
+      const plPromise = fetch(
+        `${BASE_URL}?q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=20&printType=books&langRestrict=pl`
+      );
+
+      const globalPromise = fetch(
         `${BASE_URL}?q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=20&printType=books`
       );
 
-      if (!response.ok) {
-        throw new Error(`Google Books Error: ${response.statusText}`);
+      const [plRes, globalRes] = await Promise.all([plPromise, globalPromise]);
+
+      if (!plRes.ok || !globalRes.ok) {
+        throw new Error(`Google Books Error`);
       }
 
-      const data: GoogleBooksResponse = await response.json();
+      const [plData, globalData] = await Promise.all([plRes.json(), globalRes.json()]);
 
-      if (!data.items) return [];
+      const allItems: GoogleBookResult[] = [...(plData.items || []), ...(globalData.items || [])];
 
-      return data.items
+      const uniqueItems = Array.from(new Map(allItems.map((item) => [item.id, item])).values());
+
+      return uniqueItems
         .filter((item) => {
           const info = item.volumeInfo;
-          return info.authors && info.authors.length > 0 && info.imageLinks;
+          return info.authors && info.authors.length > 0 && info.title && info.imageLinks;
         })
-        .slice(0, 8)
+        .slice(0, 15)
         .map((item) => {
           const info = item.volumeInfo;
-
           const secureCoverUrl = getBestQualityCover(info.imageLinks);
 
           const score = 30 + (info.ratingsCount ? Math.min(info.ratingsCount / 10, 70) : 0);
@@ -90,10 +96,10 @@ export const googleBooksClient = {
             coverUrl: secureCoverUrl,
             releaseDate: info.publishedDate?.split('-')[0],
             metadata: {
-              author: info.authors?.join(', ') || 'Unknown Author',
+              author: info.authors?.join(', ') || 'Unknown',
               pageCount: info.pageCount,
               categories: info.categories,
-              description: info.description ? info.description.substring(0, 200) + '...' : '',
+              description: info.description ? info.description.substring(0, 300) + '...' : '',
               googleRating: info.averageRating,
               language: info.language,
             },

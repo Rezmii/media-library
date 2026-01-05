@@ -69,8 +69,6 @@ export function SearchDialog({ children }: SearchDialogProps) {
     setIsAdding(null);
 
     if (result.success) {
-      setOpen(false);
-      setQuery('');
       setResults([]);
 
       toast.success('Dodano do biblioteki', {
