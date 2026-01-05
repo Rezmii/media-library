@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import { UnifiedMediaItem } from '@/core/types/media';
 
+import { MediaDetailsDialog } from '@/components/domain/media-details-dialog';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
@@ -118,7 +119,9 @@ export function SearchDialog({ children }: SearchDialogProps) {
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
             {results.map((item) => (
               <div key={`${item.type}-${item.externalId}`} className="relative">
-                <MediaCard item={item} onAdd={handleAdd} isAdded={item.isAdded || false} />
+                <MediaDetailsDialog item={item} onAdd={handleAdd}>
+                  <MediaCard item={item} onAdd={handleAdd} isAdded={item.isAdded || false} />
+                </MediaDetailsDialog>
                 {isAdding === item.externalId && (
                   <div className="absolute inset-0 z-50 flex items-center justify-center rounded-xl bg-black/60 backdrop-blur-sm">
                     <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />

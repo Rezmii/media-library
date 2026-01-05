@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Mic2,
   Music2,
+  Plus,
   Save,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -41,9 +42,10 @@ import { TagManager } from './tag-manager';
 interface MediaDetailsDialogProps {
   item: UnifiedMediaItem;
   children: React.ReactNode;
+  onAdd?: (item: UnifiedMediaItem) => void;
 }
 
-export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) {
+export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialogProps) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(item.note || '');
   const [rating, setRating] = useState(item.rating || 0);
@@ -64,6 +66,15 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
       setOpen(false);
     } else {
       toast.error('Błąd zapisu');
+    }
+  };
+
+  const handleAddFromModal = async () => {
+    if (onAdd) {
+      setIsSaving(true);
+      onAdd(item);
+      setIsSaving(false);
+      setOpen(false);
     }
   };
 
@@ -241,8 +252,12 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-blue-900/30 bg-blue-950/20 p-6 py-10 text-center text-blue-200">
-                Dodaj ten element do biblioteki, aby odblokować notatki i oceny.
+              <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-900/30 p-6">
+                <h3 className="mb-2 text-lg font-bold text-zinc-200">Nie masz tego w bibliotece</h3>
+                <p className="mb-4 text-zinc-400">
+                  Dodaj ten tytuł, aby móc śledzić postępy, wystawiać oceny i pisać notatki.
+                </p>
+                {/* Tutaj nie dajemy przycisku, bo damy go w Footerze */}
               </div>
             )}
 
@@ -257,7 +272,7 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
             )}
           </div>
 
-          {item.isAdded && (
+          {item.isAdded ? (
             <div className="flex justify-end gap-2 border-t border-zinc-800 bg-zinc-950/80 p-6 backdrop-blur-sm">
               <DeleteMediaButton
                 id={item.externalId}
@@ -274,6 +289,18 @@ export function MediaDetailsDialog({ item, children }: MediaDetailsDialogProps) 
               >
                 <Save className="h-5 w-5" />
                 {isSaving ? 'Zapisywanie...' : 'Zapisz zmiany'}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex justify-end gap-2 border-t border-zinc-800 bg-zinc-950/80 p-6 backdrop-blur-sm">
+              <Button
+                onClick={handleAddFromModal}
+                disabled={isSaving}
+                size="lg"
+                className="gap-2 bg-white px-8 text-base font-semibold text-black hover:bg-zinc-200"
+              >
+                <Plus className="h-5 w-5" />
+                {isSaving ? 'Dodawanie...' : 'Dodaj do biblioteki'}
               </Button>
             </div>
           )}

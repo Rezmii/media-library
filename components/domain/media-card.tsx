@@ -79,7 +79,12 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
           </div>
         )}
         {!item.status && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div
+            className={cn(
+              'absolute inset-0 flex items-center justify-center transition-all duration-300',
+              isAdded ? 'bg-black/60 opacity-100' : 'bg-black/60 opacity-0 group-hover:opacity-100'
+            )}
+          >
             {onAdd && (
               <Button
                 size="icon"
@@ -88,7 +93,10 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
                   'h-12 w-12 scale-75 rounded-full transition-transform duration-300 group-hover:scale-100',
                   isAdded && 'bg-emerald-600 text-white hover:bg-emerald-700'
                 )}
-                onClick={() => onAdd(item)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isAdded) onAdd(item);
+                }}
                 disabled={isAdded}
               >
                 {isAdded ? <Check className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
