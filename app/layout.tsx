@@ -36,18 +36,18 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <div className="flex min-h-screen flex-col md:flex-row">
-            {/* 1. Sidebar (Desktop) */}
+          <div className="relative min-h-screen">
             <Sidebar />
 
-            {/* 2. Main Content Wrapper */}
-            <div className="flex min-h-screen flex-1 flex-col">
+            <div className="flex min-h-screen flex-col">
               <header className="bg-background/95 sticky top-0 z-50 flex h-14 items-center border-b px-4 backdrop-blur md:hidden">
                 <MobileNav />
                 <span className="ml-4 font-bold">Media Library</span>
               </header>
 
-              <main className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-8 lg:p-10">{children}</main>
+              <main className="mx-auto w-full max-w-[1600px] flex-1 p-4 md:p-8 lg:p-12">
+                {children}
+              </main>
             </div>
           </div>
           <Toaster />

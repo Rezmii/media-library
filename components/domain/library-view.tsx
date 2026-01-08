@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
+import { DashboardHeader } from './dashboard-header';
 import { MediaDetailsDialog } from './media-details-dialog';
 
 interface LibraryViewProps {
@@ -57,24 +58,7 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-3">
-          {icon && <div className="text-primary rounded-lg bg-zinc-900 p-2">{icon}</div>}
-          <div>
-            <h1 className="mb-1 text-4xl font-bold tracking-tight">{title}</h1>
-            <p className="text-muted-foreground text-lg">
-              {items.length} {items.length === 1 ? 'element' : 'elementów'} w kolekcji
-            </p>
-          </div>
-        </div>
-
-        <SearchDialog>
-          <Button size="lg" className="gap-2 px-6 text-base">
-            <Plus className="h-5 w-5" />
-            Dodaj element
-          </Button>
-        </SearchDialog>
-      </div>
+      <DashboardHeader title={title} count={items.length} icon={icon} />
 
       <div className="flex items-center gap-2 pb-2">
         <Popover open={open} onOpenChange={setOpen}>

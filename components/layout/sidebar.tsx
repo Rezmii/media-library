@@ -15,7 +15,7 @@ export function SidebarContent() {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full flex-col gap-4 py-4">
+    <div className="flex h-full w-full flex-col gap-4 border-r bg-zinc-950/95 py-4 shadow-2xl backdrop-blur-xl">
       <div className="flex h-16 items-center px-6">
         <Link
           href="/"
@@ -43,8 +43,8 @@ export function SidebarContent() {
                     variant={isActive ? 'secondary' : 'ghost'}
                     asChild
                     className={cn(
-                      'h-12 justify-start gap-4 px-4 text-lg font-medium',
-                      isActive && 'bg-zinc-800 font-medium text-white'
+                      'h-12 justify-start gap-4 px-4 text-lg font-medium transition-all',
+                      isActive && 'bg-zinc-800 font-medium text-white shadow-sm'
                     )}
                   >
                     <Link href={item.href}>
@@ -59,15 +59,29 @@ export function SidebarContent() {
         </nav>
       </ScrollArea>
 
-      <div className="border-t p-4 text-center text-xs text-zinc-500">v1.0.0 Alpha</div>
+      <div className="border-t border-white/5 p-4 text-center text-xs text-zinc-500">
+        v1.0.0 Alpha
+      </div>
     </div>
   );
 }
 
 export function Sidebar() {
   return (
-    <div className="sticky top-0 hidden h-screen w-80 border-r bg-zinc-950/50 md:block">
-      <SidebarContent />
-    </div>
+    <aside className="group pointer-events-none fixed top-0 left-0 z-[100] hidden h-screen w-72 flex-col md:flex">
+      <div
+        className={cn(
+          'pointer-events-auto absolute top-0 left-0 z-50 h-full bg-transparent transition-all',
+          'w-2',
+          '2xl:w-154'
+        )}
+      />
+
+      <div className="pointer-events-auto h-full w-full -translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
+        <SidebarContent />
+      </div>
+
+      <div className="absolute top-1/2 left-0 -mt-10 h-20 w-1 rounded-r-full bg-zinc-400/50 opacity-50 transition-opacity group-hover:opacity-0" />
+    </aside>
   );
 }
