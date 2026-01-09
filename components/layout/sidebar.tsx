@@ -71,13 +71,13 @@ export function Sidebar() {
     <aside className="group pointer-events-none fixed top-0 left-0 z-[100] hidden h-screen w-72 flex-col md:flex">
       <div
         className={cn(
-          'pointer-events-auto absolute top-0 left-0 z-50 h-full bg-transparent transition-all',
+          'pointer-events-auto absolute top-0 left-0 z-40 h-full bg-transparent transition-all',
           'w-2',
-          '2xl:w-154'
+          'xl:w-16'
         )}
       />
 
-      <div className="pointer-events-auto h-full w-full -translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
+      <div className="pointer-events-auto z-50 h-full w-full -translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
         <SidebarContent />
       </div>
 
