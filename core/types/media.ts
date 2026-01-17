@@ -6,6 +6,7 @@ export interface UnifiedMediaItem {
   coverUrl: string | null;
   type: MediaType;
   releaseDate?: string;
+  addedAt?: string;
   metadata: Record<string, any>;
   isAdded?: boolean;
   popularityScore?: number;

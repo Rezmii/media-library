@@ -9,11 +9,10 @@ import {
   AlignLeft,
   BookOpen,
   Calendar,
+  CalendarPlus,
   Clock,
   Disc,
   ExternalLink,
-  Mic2,
-  Music2,
   Plus,
   Save,
 } from 'lucide-react';
@@ -57,14 +56,26 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
 
   const heroImage = item.metadata?.backdropUrl || item.coverUrl;
 
-  const handleSave = async () => {
+  const handleRatingChange = async (newRating: number) => {
+    setRating(newRating);
+
+    const result = await updateMediaDetailsAction(item.externalId, newRating, note);
+
+    if (result.success) {
+      toast.success('Zaktualizowano ocenę');
+    } else {
+      toast.error('Błąd zapisu oceny');
+      setRating(item.rating || 0);
+    }
+  };
+
+  const handleSaveNote = async () => {
     setIsSaving(true);
     const result = await updateMediaDetailsAction(item.externalId, rating, note);
     setIsSaving(false);
 
     if (result.success) {
       toast.success('Zapisano zmiany');
-      setOpen(false);
     } else {
       toast.error('Błąd zapisu');
     }
@@ -131,9 +142,22 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
 
                 <div className="flex flex-wrap items-center gap-4 text-base text-zinc-400">
                   {item.releaseDate && (
-                    <span className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-1">
-                      <Calendar className="h-4 w-4" />
+                    <span
+                      className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-1"
+                      title="Data premiery"
+                    >
+                      <Calendar className="h-4 w-4 text-zinc-400" />
                       {item.releaseDate}
+                    </span>
+                  )}
+
+                  {item.isAdded && item.addedAt && (
+                    <span
+                      className="flex items-center gap-2 rounded-md border border-emerald-900/30 bg-emerald-950/30 px-3 py-1 text-emerald-200/80"
+                      title="Data dodania do biblioteki"
+                    >
+                      <CalendarPlus className="h-4 w-4 text-emerald-500" />
+                      {item.addedAt}
                     </span>
                   )}
                   {item.metadata.tmdbRating && (
@@ -235,7 +259,7 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                       Twoja Ocena
                     </label>
                     <div className="origin-left scale-110">
-                      <StarRating value={rating} onChange={setRating} />
+                      <StarRating value={rating} onChange={handleRatingChange} />
                     </div>
                   </div>
                 </div>
@@ -283,7 +307,7 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                 className="text-zinc-500 hover:bg-red-950/30 hover:text-red-400"
               />
               <Button
-                onClick={handleSave}
+                onClick={handleSaveNote}
                 disabled={isSaving}
                 size="lg"
                 className="gap-2 bg-emerald-600 px-8 text-base font-semibold text-white hover:bg-emerald-700"

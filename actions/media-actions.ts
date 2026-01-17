@@ -132,6 +132,7 @@ export async function addToLibraryAction(item: UnifiedMediaItem, isBacklog: bool
       metadata: {
         ...item.metadata,
         externalId: item.externalId,
+        releaseDate: item.releaseDate,
       },
       tags: autoTags,
       createdAt: customCreatedAt,
