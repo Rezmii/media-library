@@ -37,9 +37,7 @@ export const mediaRepository = {
       include: {
         tags: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
     });
   },
 
