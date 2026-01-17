@@ -26,6 +26,7 @@ export type CreateMediaInput = {
   coverUrl?: string;
   metadata?: Record<string, any>;
   tags?: string[];
+  createdAt?: Date;
 };
 
 export const mediaRepository = {
@@ -51,6 +52,7 @@ export const mediaRepository = {
         coverUrl: data.coverUrl,
         metadata: data.metadata ?? Prisma.JsonNull,
         status: Status.COMPLETED,
+        createdAt: data.createdAt,
         tags: {
           connectOrCreate: data.tags?.map((tag) => ({
             where: { name: tag },

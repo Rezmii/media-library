@@ -18,7 +18,7 @@ interface SpotifyAlbum {
   id: string;
   name: string;
   artists: SpotifyArtist[];
-  album_type: 'album' | 'single' | 'compilation';
+  album_type: 'album' | 'single' | 'compilation' | 'EP';
   release_date: string;
   total_tracks: number;
   images: SpotifyImage[];
@@ -93,12 +93,28 @@ export const spotifyClient = {
             title.includes('tribute to') ||
             title.includes('cover version');
 
-          return album.album_type === 'album' && !isJunk;
+          const isFullAlbum = album.album_type === 'album';
+          const isEP = album.album_type === 'single' && album.total_tracks > 3;
+
+          return (isFullAlbum || isEP) && !isJunk;
         })
-        .slice(0, 8)
+        .slice(0, 25)
         .map((album) => {
           const coverUrl = album.images[0]?.url || null;
           const allArtists = album.artists.map((a) => a.name);
+
+          let preciseType = album.album_type;
+
+          if (album.album_type === 'single' && album.total_tracks > 3) {
+            if (album.total_tracks > 3) {
+              preciseType = 'EP';
+            } else {
+              preciseType = 'single';
+            }
+          } else if (album.album_type === 'album') {
+            preciseType = 'album';
+          }
+
           return {
             externalId: album.id,
             type: 'ALBUM',
@@ -109,10 +125,10 @@ export const spotifyClient = {
               artist: allArtists.join(', '),
               totalTracks: album.total_tracks,
               spotifyUrl: album.external_urls.spotify,
-              subtype: album.album_type,
+              subtype: preciseType,
               popularityScore: album.popularity,
             },
-            tags: ['Muzyka', album.album_type],
+            tags: ['Muzyka', preciseType],
           };
         });
     } catch (error) {

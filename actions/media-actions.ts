@@ -22,18 +22,20 @@ function revalidatePaths() {
   revalidatePath('/music');
 }
 
-async function getExistingLibraryIds(): Promise<Set<string>> {
+async function getExistingLibraryMap(): Promise<Map<string, string>> {
   const allItems = await mediaRepository.getAll();
-  const ids = new Set<string>();
+
+  const map = new Map<string, string>();
 
   allItems.forEach((item) => {
     const meta = item.metadata as Record<string, any>;
+
     if (meta && meta.externalId) {
-      ids.add(meta.externalId);
+      map.set(meta.externalId, item.id);
     }
   });
 
-  return ids;
+  return map;
 }
 
 export async function searchMediaAction(
@@ -92,13 +94,19 @@ export async function searchMediaAction(
 
     const fusedResults = fuse.search(query);
 
-    const existingIds = await getExistingLibraryIds();
+    const existingMap = await getExistingLibraryMap();
 
     return fusedResults
-      .map((result) => ({
-        ...result.item,
-        isAdded: existingIds.has(result.item.externalId),
-      }))
+      .map((result) => {
+        const item = result.item;
+        const dbId = existingMap.get(item.externalId);
+
+        return {
+          ...item,
+          isAdded: !!dbId,
+          externalId: dbId || item.externalId,
+        };
+      })
       .slice(0, 20);
   } catch (error) {
     console.error('Błąd wyszukiwania:', error);
@@ -106,7 +114,7 @@ export async function searchMediaAction(
   }
 }
 
-export async function addToLibraryAction(item: UnifiedMediaItem) {
+export async function addToLibraryAction(item: UnifiedMediaItem, isBacklog: boolean = false) {
   try {
     const autoTags: string[] = [];
 
@@ -114,6 +122,8 @@ export async function addToLibraryAction(item: UnifiedMediaItem) {
     if (item.metadata.categories) autoTags.push(...item.metadata.categories);
     if (item.metadata.originalType) autoTags.push(item.metadata.originalType);
     if (item.releaseDate) autoTags.push(item.releaseDate);
+
+    const customCreatedAt = isBacklog ? new Date('2026-01-17T16:27:25Z') : undefined;
 
     await mediaRepository.create({
       title: item.title,
@@ -124,6 +134,7 @@ export async function addToLibraryAction(item: UnifiedMediaItem) {
         externalId: item.externalId,
       },
       tags: autoTags,
+      createdAt: customCreatedAt,
     });
 
     revalidatePaths();
