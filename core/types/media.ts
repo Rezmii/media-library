@@ -26,9 +26,17 @@ export interface UnifiedMediaDetails {
   // Muzyka
   tracks?: { title: string; duration: number; features: string[] }[];
 
-  // Przyszłościowo dla Filmów/Gier (możesz to rozszerzać)
-  cast?: string[];
+  // Filmy i Seriale (TMDB)
+  cast?: { name: string; character: string; photoUrl: string | null }[];
   director?: string;
-  playtime?: number;
-  achievements_count?: number;
+  runtime?: number;
+
+  // Tylko Seriale
+  seasons?: {
+    name: string;
+    episodeCount: number;
+    airDate: string;
+    posterUrl: string | null;
+  }[];
+  status?: string;
 }

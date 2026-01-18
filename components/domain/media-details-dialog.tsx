@@ -11,6 +11,7 @@ import {
   BookOpen,
   Calendar,
   CalendarPlus,
+  Clapperboard,
   Clock,
   Disc,
   ExternalLink,
@@ -18,6 +19,8 @@ import {
   Loader2,
   Plus,
   Save,
+  Tv,
+  Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -60,12 +63,10 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
   useEffect(() => {
     if (open && !details) {
       const fetchDetails = async () => {
-        if (item.type !== 'ALBUM') return;
-
         setIsLoadingDetails(true);
-        const spotifyApiId = item.isAdded ? item.metadata?.externalId : item.externalId;
-        if (spotifyApiId) {
-          const res = await getMediaDetailsAction(spotifyApiId, item.type);
+        const cleanId = item.isAdded ? item.metadata?.externalId : item.externalId;
+        if (cleanId) {
+          const res = await getMediaDetailsAction(cleanId, item.type);
           if (res.success && res.data) {
             setDetails(res.data);
           }
@@ -325,6 +326,110 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
               </div>
             )}
 
+            {(item.type === 'MOVIE' || item.type === 'SERIES') && details && (
+              <div className="mt-8 space-y-8">
+                {/* 1. INFORMACJE OGÓLNE (Reżyser / Czas) */}
+                <div className="flex flex-wrap gap-6 text-sm text-zinc-400">
+                  {/* Reżyser (tylko filmy) */}
+                  {details.director && (
+                    <div className="flex items-center gap-2">
+                      <Clapperboard className="h-5 w-5 text-emerald-500" />
+                      <span className="text-zinc-500">Reżyseria:</span>
+                      <span className="font-medium text-zinc-200">{details.director}</span>
+                    </div>
+                  )}
+
+                  {/* Czas trwania */}
+                  {item.type === 'MOVIE' && details.runtime && details.runtime > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-emerald-500" />
+                      <span className="font-medium text-zinc-200">
+                        {Math.floor(details.runtime / 60)}h {details.runtime % 60}m
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. SEZONY (Tylko Seriale) */}
+                {item.type === 'SERIES' && details.seasons && (
+                  <div>
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-zinc-200">
+                      <Tv className="h-5 w-5 text-emerald-500" /> Sezony
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                      {details.seasons.map((season) => (
+                        <div
+                          key={season.name}
+                          className="flex gap-3 rounded-lg border border-zinc-800/50 bg-zinc-900/50 p-2"
+                        >
+                          {season.posterUrl ? (
+                            <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded">
+                              <Image
+                                src={season.posterUrl}
+                                alt={season.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-16 w-12 shrink-0 rounded bg-zinc-800" />
+                          )}
+                          <div className="flex flex-col justify-center">
+                            <span className="text-sm font-bold text-zinc-200">{season.name}</span>
+                            <span className="text-xs text-zinc-500">
+                              {season.episodeCount} odc. • {season.airDate}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. OBSADA (Filmy i Seriale) */}
+                {details.cast && details.cast.length > 0 && (
+                  <div>
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-zinc-200">
+                      <Users className="h-5 w-5 text-emerald-500" /> Obsada
+                    </h3>
+
+                    {/* Grid aktorów */}
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                      {details.cast.map((actor) => (
+                        <div
+                          key={actor.name}
+                          className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900"
+                        >
+                          {actor.photoUrl ? (
+                            <Image
+                              src={actor.photoUrl}
+                              alt={actor.name}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center bg-zinc-800 text-zinc-700">
+                              Brak foto
+                            </div>
+                          )}
+
+                          {/* Overlay z nazwiskiem */}
+                          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2 opacity-100">
+                            <span className="text-sm leading-tight font-bold text-white">
+                              {actor.name}
+                            </span>
+                            <span className="truncate text-xs text-zinc-400">
+                              {actor.character}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 3. Sekcja Użytkownika */}
             {item.isAdded ? (
               <div className="mt-8 space-y-6 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-6">
@@ -357,7 +462,6 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                 <p className="mb-4 text-zinc-400">
                   Dodaj ten tytuł, aby móc śledzić postępy, wystawiać oceny i pisać notatki.
                 </p>
-                {/* Tutaj nie dajemy przycisku, bo damy go w Footerze */}
               </div>
             )}
 
@@ -368,25 +472,6 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                 <hr className="my-6 border-zinc-800" />
                 <div className="space-y-2">
                   <TagManager itemId={item.externalId} initialTags={item.tags} />
-
-                  {details?.genres && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {details.genres
-                        .filter((g) => !item.tags.includes(g))
-                        .map((genre) => (
-                          <button
-                            key={genre}
-                            // Tutaj musiałbyś dodać logikę dodawania tagu po kliknięciu
-                            // np. wywołując addTagAction z TagManagera, ale to wymagałoby refaktora TagManagera,
-                            // żeby wystawił metodę na zewnątrz.
-                            // Na razie wyświetlmy je jako informację "Gatunki albumu"
-                            className="cursor-default rounded-full border border-zinc-800 px-2 py-1 text-xs text-zinc-600 opacity-60"
-                          >
-                            + {genre}
-                          </button>
-                        ))}
-                    </div>
-                  )}
                 </div>
               </>
             )}

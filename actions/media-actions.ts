@@ -138,6 +138,23 @@ export async function addToLibraryAction(item: UnifiedMediaItem, isBacklog: bool
         console.error('Warning: Nie udało się dociągnąć tagów ze Spotify przy dodawaniu', err);
       }
     }
+    if (item.type === 'MOVIE' || item.type === 'SERIES') {
+      try {
+        const details = await tmdbClient.getDetails(item.externalId, item.type);
+
+        if (details) {
+          details.genres.forEach((g) => autoTags.push(g));
+
+          if (details.director) autoTags.push(details.director);
+
+          if (details.cast) {
+            details.cast.slice(0, 5).forEach((actor) => autoTags.push(actor.name));
+          }
+        }
+      } catch (err) {
+        console.error('Warning: TMDB auto-tag failed', err);
+      }
+    }
     if (item.type === 'BOOK' && item.metadata.author) {
       autoTags.push(item.metadata.author);
     }
@@ -253,6 +270,20 @@ export async function getMediaDetailsAction(
         details = {
           genres: albumData.genres,
           tracks: albumData.tracks,
+        };
+      }
+    }
+
+    if (type === 'MOVIE' || type === 'SERIES') {
+      const tmdbData = await tmdbClient.getDetails(externalId, type);
+      if (tmdbData) {
+        details = {
+          genres: tmdbData.genres,
+          cast: tmdbData.cast,
+          director: tmdbData.director,
+          runtime: tmdbData.runtime,
+          seasons: tmdbData.seasons,
+          status: tmdbData.status,
         };
       }
     }

@@ -6,6 +6,38 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_BASE_URL = 'https://image.tmdb.org/t/p/w1280';
 
+interface TmdbCastMember {
+  name: string;
+  character: string;
+  profile_path: string | null;
+  known_for_department: string;
+}
+
+interface TmdbCrewMember {
+  name: string;
+  job: string;
+}
+
+interface TmdbSeason {
+  name: string;
+  episode_count: number;
+  air_date: string;
+  poster_path: string | null;
+  season_number: number;
+}
+
+interface TmdbDetailsResponse {
+  genres: { name: string }[];
+  runtime?: number;
+  episode_run_time?: number[];
+  credits: {
+    cast: TmdbCastMember[];
+    crew: TmdbCrewMember[];
+  };
+  seasons?: TmdbSeason[];
+  status?: string;
+}
+
 interface TmdbResult {
   id: number;
   media_type: 'movie' | 'tv' | 'person';
@@ -98,6 +130,59 @@ export const tmdbClient = {
     } catch (error) {
       console.error('Błąd w tmdbClient:', error);
       return [];
+    }
+  },
+  getDetails: async (externalId: string, type: 'MOVIE' | 'SERIES') => {
+    if (!API_KEY) return null;
+
+    try {
+      const endpoint = type === 'MOVIE' ? 'movie' : 'tv';
+
+      const url = `${BASE_URL}/${endpoint}/${externalId}?api_key=${API_KEY}&language=pl-PL&append_to_response=credits`;
+
+      const res = await fetch(url);
+      if (!res.ok) return null;
+
+      const data: TmdbDetailsResponse = await res.json();
+
+      const genres = data.genres.map((g) => g.name);
+
+      const cast = data.credits.cast.slice(0, 10).map((actor) => ({
+        name: actor.name,
+        character: actor.character,
+        photoUrl: actor.profile_path ? `${IMAGE_BASE_URL}${actor.profile_path}` : null,
+      }));
+
+      let director: string | undefined = undefined;
+      if (type === 'MOVIE') {
+        const directorObj = data.credits.crew.find((c) => c.job === 'Director');
+        if (directorObj) director = directorObj.name;
+      }
+
+      const runtime =
+        data.runtime ||
+        (data.episode_run_time && data.episode_run_time.length > 0 ? data.episode_run_time[0] : 0);
+
+      const seasons = data.seasons
+        ?.filter((s) => s.season_number > 0)
+        .map((s) => ({
+          name: s.name,
+          episodeCount: s.episode_count,
+          airDate: s.air_date?.split('-')[0] || '?',
+          posterUrl: s.poster_path ? `${IMAGE_BASE_URL}${s.poster_path}` : null,
+        }));
+
+      return {
+        genres,
+        cast,
+        director,
+        runtime,
+        seasons,
+        status: data.status,
+      };
+    } catch (error) {
+      console.error('Błąd TMDB getDetails:', error);
+      return null;
     }
   },
 };
