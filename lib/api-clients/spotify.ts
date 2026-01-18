@@ -3,6 +3,20 @@ import { UnifiedMediaItem } from '@/core/types/media';
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  track_number: number;
+  duration_ms: number;
+  artists: SpotifyArtist[];
+}
+
+interface SpotifyArtistFull {
+  id: string;
+  name: string;
+  genres: string[];
+}
+
 interface SpotifyImage {
   url: string;
   height: number;
@@ -134,6 +148,52 @@ export const spotifyClient = {
     } catch (error) {
       console.error('Błąd w spotifyClient:', error);
       return [];
+    }
+  },
+
+  getAlbumDetails: async (albumId: string) => {
+    try {
+      const token = await getAccessToken();
+
+      const albumResponse = await fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!albumResponse.ok) return null;
+      const albumData = await albumResponse.json();
+
+      let genres: string[] = [];
+      if (albumData.artists && albumData.artists.length > 0) {
+        const artistId = albumData.artists[0].id;
+        const artistResponse = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (artistResponse.ok) {
+          const artistData: SpotifyArtistFull = await artistResponse.json();
+          genres = artistData.genres || [];
+        }
+      }
+
+      const tracks = albumData.tracks.items.map((track: SpotifyTrack) => {
+        const albumArtistIds = albumData.artists.map((a: any) => a.id);
+        const featArtists = track.artists
+          .filter((a) => !albumArtistIds.includes(a.id))
+          .map((a) => a.name);
+
+        return {
+          title: track.name,
+          duration: track.duration_ms,
+          features: featArtists,
+        };
+      });
+
+      return {
+        tracks,
+        genres: genres.slice(0, 5),
+      };
+    } catch (error) {
+      console.error('Błąd pobierania detali albumu:', error);
+      return null;
     }
   },
 };

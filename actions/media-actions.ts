@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { MediaType, Status } from '@prisma/client';
 import Fuse from 'fuse.js';
 
-import { UnifiedMediaItem } from '@/core/types/media';
+import { UnifiedMediaDetails, UnifiedMediaItem } from '@/core/types/media';
 
 import { googleBooksClient } from '@/lib/api-clients/google-books';
 import { rawgClient } from '@/lib/api-clients/rawg';
@@ -122,6 +122,25 @@ export async function addToLibraryAction(item: UnifiedMediaItem, isBacklog: bool
     if (item.metadata.categories) autoTags.push(...item.metadata.categories);
     if (item.metadata.originalType) autoTags.push(item.metadata.originalType);
     if (item.releaseDate) autoTags.push(item.releaseDate);
+    if (item.type === 'ALBUM') {
+      try {
+        const spotifyId = item.externalId;
+
+        const details = await spotifyClient.getAlbumDetails(spotifyId);
+
+        if (details) {
+          details.genres.forEach((g) => autoTags.push(g));
+          if (item.metadata.artist) {
+            autoTags.push(item.metadata.artist);
+          }
+        }
+      } catch (err) {
+        console.error('Warning: Nie udało się dociągnąć tagów ze Spotify przy dodawaniu', err);
+      }
+    }
+    if (item.type === 'BOOK' && item.metadata.author) {
+      autoTags.push(item.metadata.author);
+    }
 
     const customCreatedAt = isBacklog ? new Date('2026-01-17T16:27:25Z') : undefined;
 
@@ -149,7 +168,9 @@ export async function addToLibraryAction(item: UnifiedMediaItem, isBacklog: bool
 
 export async function updateStatusAction(id: string, status: Status) {
   try {
-    await mediaRepository.updateStatus(id, status);
+    const newDate = status === 'COMPLETED' ? new Date() : undefined;
+
+    await mediaRepository.updateStatus(id, status, newDate);
 
     revalidatePaths();
 
@@ -216,5 +237,29 @@ export async function deleteMediaAction(id: string) {
   } catch (error) {
     console.error('Błąd usuwania:', error);
     return { success: false, error: 'Nie udało się usunąć elementu' };
+  }
+}
+
+export async function getMediaDetailsAction(
+  externalId: string,
+  type: MediaType
+): Promise<{ success: boolean; data: UnifiedMediaDetails | null }> {
+  try {
+    let details: UnifiedMediaDetails | null = null;
+
+    if (type === 'ALBUM') {
+      const albumData = await spotifyClient.getAlbumDetails(externalId);
+      if (albumData) {
+        details = {
+          genres: albumData.genres,
+          tracks: albumData.tracks,
+        };
+      }
+    }
+
+    return { success: true, data: details };
+  } catch (error) {
+    console.error(`Błąd pobierania detali dla ${type}:`, error);
+    return { success: false, data: null };
   }
 }

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
 import { updateMediaDetailsAction } from '@/actions/media-actions';
+import { getMediaDetailsAction } from '@/actions/media-actions';
 import {
   AlignLeft,
   BookOpen,
@@ -13,12 +14,14 @@ import {
   Clock,
   Disc,
   ExternalLink,
+  ListMusic,
+  Loader2,
   Plus,
   Save,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { UnifiedMediaItem } from '@/core/types/media';
+import { UnifiedMediaDetails, UnifiedMediaItem } from '@/core/types/media';
 
 import { cn } from '@/lib/utils';
 
@@ -50,6 +53,34 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
   const [note, setNote] = useState(item.note || '');
   const [rating, setRating] = useState(item.rating || 0);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [details, setDetails] = useState<UnifiedMediaDetails | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  useEffect(() => {
+    if (open && !details) {
+      const fetchDetails = async () => {
+        if (item.type !== 'ALBUM') return;
+
+        setIsLoadingDetails(true);
+        const spotifyApiId = item.isAdded ? item.metadata?.externalId : item.externalId;
+        if (spotifyApiId) {
+          const res = await getMediaDetailsAction(spotifyApiId, item.type);
+          if (res.success && res.data) {
+            setDetails(res.data);
+          }
+        }
+        setIsLoadingDetails(false);
+      };
+      fetchDetails();
+    }
+  }, [open, item.type, item.externalId, item.isAdded, item.metadata]);
+
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return `${minutes}:${Number(seconds) < 10 ? '0' : ''}${seconds}`;
+  };
 
   const description =
     item.metadata?.overview || item.metadata?.description || 'Brak opisu dla tego elementu.';
@@ -250,6 +281,50 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
               </p>
             </div>
 
+            {item.type === 'ALBUM' && (
+              <div className="mt-8">
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-zinc-200">
+                  <ListMusic className="h-5 w-5 text-emerald-500" /> Lista utworów
+                </h3>
+
+                {isLoadingDetails ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
+                  </div>
+                ) : details ? (
+                  <div className="flex flex-col gap-1">
+                    {details.tracks?.map((track, index) => (
+                      <div
+                        key={index}
+                        className="group flex items-start justify-between rounded-md px-3 py-2 text-sm transition-colors hover:bg-zinc-900/50"
+                      >
+                        <div className="flex gap-3">
+                          <span className="w-5 text-right font-mono text-zinc-600">
+                            {index + 1}.
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-zinc-300">{track.title}</span>
+                            {track.features.length > 0 && (
+                              <span className="text-xs text-zinc-500">
+                                feat. {track.features.join(', ')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="font-mono text-xs text-zinc-600 group-hover:text-zinc-400">
+                          {formatTime(track.duration)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-500 italic">
+                    Nie udało się pobrać listy utworów.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* 3. Sekcja Użytkownika */}
             {item.isAdded ? (
               <div className="mt-8 space-y-6 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-6">
@@ -290,8 +365,28 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
 
             {item.isAdded && (
               <>
+                <hr className="my-6 border-zinc-800" />
                 <div className="space-y-2">
                   <TagManager itemId={item.externalId} initialTags={item.tags} />
+
+                  {details?.genres && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {details.genres
+                        .filter((g) => !item.tags.includes(g))
+                        .map((genre) => (
+                          <button
+                            key={genre}
+                            // Tutaj musiałbyś dodać logikę dodawania tagu po kliknięciu
+                            // np. wywołując addTagAction z TagManagera, ale to wymagałoby refaktora TagManagera,
+                            // żeby wystawił metodę na zewnątrz.
+                            // Na razie wyświetlmy je jako informację "Gatunki albumu"
+                            className="cursor-default rounded-full border border-zinc-800 px-2 py-1 text-xs text-zinc-600 opacity-60"
+                          >
+                            + {genre}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </div>
               </>
             )}

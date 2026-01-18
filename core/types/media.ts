@@ -18,3 +18,17 @@ export interface UnifiedMediaItem {
 
   tags: string[];
 }
+
+export interface UnifiedMediaDetails {
+  // Wspólne
+  genres?: string[];
+
+  // Muzyka
+  tracks?: { title: string; duration: number; features: string[] }[];
+
+  // Przyszłościowo dla Filmów/Gier (możesz to rozszerzać)
+  cast?: string[];
+  director?: string;
+  playtime?: number;
+  achievements_count?: number;
+}

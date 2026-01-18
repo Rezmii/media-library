@@ -62,10 +62,13 @@ export const mediaRepository = {
   },
 
   // Zmiana statusu
-  updateStatus: async (id: string, status: Status) => {
+  updateStatus: async (id: string, status: Status, newCreatedAt?: Date) => {
     return await db.mediaItem.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        ...(newCreatedAt && { createdAt: newCreatedAt }),
+      },
     });
   },
 
