@@ -137,7 +137,7 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
               alt={item.title}
               fill
               className="object-cover opacity-90 md:opacity-100"
-              unoptimized={heroImage.includes('google')}
+              unoptimized
             />
           ) : (
             <div className="flex h-full items-center justify-center text-xl font-bold text-zinc-700">
@@ -369,6 +369,7 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                                 alt={season.name}
                                 fill
                                 className="object-cover"
+                                unoptimized
                               />
                             </div>
                           ) : (
@@ -406,6 +407,7 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                               alt={actor.name}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              unoptimized
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center bg-zinc-800 text-zinc-700">

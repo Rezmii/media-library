@@ -71,7 +71,7 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
               'object-cover transition-transform duration-500 group-hover:scale-105',
               isAbandoned && 'opacity-50 grayscale'
             )}
-            unoptimized={item.coverUrl.includes('google')}
+            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-zinc-900 font-medium text-zinc-700">
