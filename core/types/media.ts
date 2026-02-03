@@ -39,4 +39,5 @@ export interface UnifiedMediaDetails {
     posterUrl: string | null;
   }[];
   status?: string;
+  description?: string;
 }

@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'image.tmdb.org' }, // TMDB (Filmy)
       { protocol: 'https', hostname: 'books.google.com' }, // Google Books
       { protocol: 'https', hostname: 'books.google.pl' }, // Google Books (lokalne)
+      { protocol: 'https', hostname: 'covers.openlibrary.org' },
     ],
   },
 };

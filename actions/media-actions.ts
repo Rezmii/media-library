@@ -7,7 +7,7 @@ import Fuse from 'fuse.js';
 
 import { UnifiedMediaDetails, UnifiedMediaItem } from '@/core/types/media';
 
-import { googleBooksClient } from '@/lib/api-clients/google-books';
+import { openLibraryClient } from '@/lib/api-clients/open-library';
 import { rawgClient } from '@/lib/api-clients/rawg';
 import { spotifyClient } from '@/lib/api-clients/spotify';
 import { tmdbClient } from '@/lib/api-clients/tmdb';
@@ -70,7 +70,7 @@ export async function searchMediaAction(
     }
 
     if (safeType === 'ALL' || safeType === 'BOOK') {
-      promises.push(googleBooksClient.searchBooks(query));
+      promises.push(openLibraryClient.searchBooks(query));
     }
 
     const resultsArrays = await Promise.all(promises);
