@@ -7,6 +7,8 @@ import Fuse from 'fuse.js';
 
 import { UnifiedMediaDetails, UnifiedMediaItem } from '@/core/types/media';
 
+import { bnClient } from '@/lib/api-clients/bn';
+import { googleBooksClient } from '@/lib/api-clients/google-books';
 import { openLibraryClient } from '@/lib/api-clients/open-library';
 import { rawgClient } from '@/lib/api-clients/rawg';
 import { spotifyClient } from '@/lib/api-clients/spotify';
@@ -70,7 +72,40 @@ export async function searchMediaAction(
     }
 
     if (safeType === 'ALL' || safeType === 'BOOK') {
-      promises.push(openLibraryClient.searchBooks(query));
+      const olPromise = openLibraryClient.searchBooks(query).then(async (books) => {
+        const enrichedBooks = await Promise.all(
+          books.map(async (book) => {
+            const needsEnrichment =
+              !book.metadata.description || !book.coverUrl || !book.metadata.pageCount;
+
+            if (needsEnrichment) {
+              const googleData = await googleBooksClient.enrichBookData(
+                book.metadata.isbn,
+                book.title,
+                book.metadata.author
+              );
+
+              if (googleData) {
+                if (!book.metadata.description) book.metadata.description = googleData.description;
+                if (!book.metadata.pageCount) book.metadata.pageCount = googleData.pageCount;
+                if (!book.metadata.googleRating)
+                  book.metadata.googleRating = googleData.averageRating;
+                if (!book.coverUrl && googleData.thumbnail) book.coverUrl = googleData.thumbnail;
+              }
+
+              if (!book.metadata.publisher) {
+                const bnData = await bnClient.findBook(book.title, book.metadata.author);
+                if (bnData) book.metadata.publisher = bnData.publisher;
+              }
+            }
+            return book;
+          })
+        );
+
+        return enrichedBooks;
+      });
+
+      promises.push(olPromise);
     }
 
     const resultsArrays = await Promise.all(promises);
@@ -80,7 +115,7 @@ export async function searchMediaAction(
       keys: [
         { name: 'title', weight: 1.0 }, // Tytuł najważniejszy
         { name: 'metadata.originalTitle', weight: 0.8 }, // Oryginalny tytuł (dla filmów)
-        { name: 'metadata.author', weight: 0.8 }, // Autor książki
+        { name: 'metadata.author', weight: 0.9 }, // Autor książki
         { name: 'metadata.artist', weight: 0.7 }, // Artysta muzyczny
         { name: 'metadata.director', weight: 0.6 }, // Reżyser (jeśli dodamy w przyszłości)
         { name: 'metadata.actors', weight: 0.5 }, // Aktorzy (jeśli dodamy)
