@@ -38,7 +38,6 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 
-import { AddAlbumAlert } from './add-album-alert';
 import { DeleteMediaButton } from './delete-media-button';
 import { MediaBadge } from './media-badge';
 import { StarRating } from './star-rating';
@@ -48,7 +47,7 @@ import { TagManager } from './tag-manager';
 interface MediaDetailsDialogProps {
   item: UnifiedMediaItem;
   children: React.ReactNode;
-  onAdd?: (item: UnifiedMediaItem, isBacklog: boolean) => void;
+  onAdd?: (item: UnifiedMediaItem) => void;
 }
 
 export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialogProps) {
@@ -113,10 +112,10 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
     }
   };
 
-  const handleAddFromModal = async (isBacklog: boolean = false) => {
+  const handleAddFromModal = async () => {
     if (onAdd) {
       setIsSaving(true);
-      await onAdd(item, isBacklog);
+      onAdd(item);
       setIsSaving(false);
       setOpen(false);
     }
@@ -501,34 +500,17 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
               </Button>
             </div>
           ) : (
-            <>
-              {/* LOGIKA WARUNKOWA: Jeśli to ALBUM, pokaż Alert wyboru. Jeśli nie, zwykły przycisk. */}
-              {item.type === 'ALBUM' ? (
-                <AddAlbumAlert onConfirm={handleAddFromModal} isSaving={isSaving}>
-                  <div className="flex justify-end gap-2 border-t border-zinc-800 bg-zinc-950/80 p-6 backdrop-blur-sm">
-                    <Button
-                      size="lg"
-                      className="gap-2 bg-white px-8 text-base font-semibold text-black hover:bg-zinc-200"
-                    >
-                      <Plus className="h-5 w-5" />
-                      {isSaving ? 'Dodawanie...' : 'Dodaj do biblioteki'}
-                    </Button>
-                  </div>
-                </AddAlbumAlert>
-              ) : (
-                <div className="flex justify-end gap-2 border-t border-zinc-800 bg-zinc-950/80 p-6 backdrop-blur-sm">
-                  <Button
-                    onClick={() => handleAddFromModal(false)}
-                    disabled={isSaving}
-                    size="lg"
-                    className="gap-2 bg-white px-8 text-base font-semibold text-black hover:bg-zinc-200"
-                  >
-                    <Plus className="h-5 w-5" />
-                    {isSaving ? 'Dodawanie...' : 'Dodaj do biblioteki'}
-                  </Button>
-                </div>
-              )}
-            </>
+            <div className="flex justify-end gap-2 border-t border-zinc-800 bg-zinc-950/80 p-6 backdrop-blur-sm">
+              <Button
+                onClick={handleAddFromModal}
+                disabled={isSaving}
+                size="lg"
+                className="gap-2 bg-white px-8 text-base font-semibold text-black hover:bg-zinc-200"
+              >
+                <Plus className="h-5 w-5" />
+                {isSaving ? 'Dodawanie...' : 'Dodaj do biblioteki'}
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>

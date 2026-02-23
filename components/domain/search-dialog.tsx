@@ -63,9 +63,9 @@ export function SearchDialog({ children }: SearchDialogProps) {
   }, [open]);
 
   // Obsługa dodawania
-  const handleAdd = async (item: UnifiedMediaItem, isBacklog: boolean = false) => {
+  const handleAdd = async (item: UnifiedMediaItem) => {
     setIsAdding(item.externalId);
-    const result = await addToLibraryAction(item, isBacklog);
+    const result = await addToLibraryAction(item);
     setIsAdding(null);
 
     if (result.success) {
@@ -117,7 +117,7 @@ export function SearchDialog({ children }: SearchDialogProps) {
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
             {results.map((item) => (
               <div key={`${item.type}-${item.externalId}`} className="relative">
-                <MediaDetailsDialog item={item} onAdd={(itm, backlog) => handleAdd(itm, backlog)}>
+                <MediaDetailsDialog item={item} onAdd={handleAdd}>
                   <MediaCard item={item} onAdd={handleAdd} isAdded={item.isAdded || false} />
                 </MediaDetailsDialog>
                 {isAdding === item.externalId && (

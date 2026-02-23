@@ -24,20 +24,20 @@ function revalidatePaths() {
   revalidatePath('/music');
 }
 
-async function getExistingLibraryMap(): Promise<Map<string, string>> {
+async function getExistingLibraryIds(): Promise<Set<string>> {
   const allItems = await mediaRepository.getAll();
 
-  const map = new Map<string, string>();
+  const ids = new Set<string>();
 
   allItems.forEach((item) => {
     const meta = item.metadata as Record<string, any>;
 
     if (meta && meta.externalId) {
-      map.set(meta.externalId, item.id);
+      ids.add(meta.externalId);
     }
   });
 
-  return map;
+  return ids;
 }
 
 export async function searchMediaAction(
@@ -129,19 +129,13 @@ export async function searchMediaAction(
 
     const fusedResults = fuse.search(query);
 
-    const existingMap = await getExistingLibraryMap();
+    const existingIds = await getExistingLibraryIds();
 
     return fusedResults
-      .map((result) => {
-        const item = result.item;
-        const dbId = existingMap.get(item.externalId);
-
-        return {
-          ...item,
-          isAdded: !!dbId,
-          externalId: dbId || item.externalId,
-        };
-      })
+      .map((result) => ({
+        ...result.item,
+        isAdded: existingIds.has(result.item.externalId),
+      }))
       .slice(0, 20);
   } catch (error) {
     console.error('Błąd wyszukiwania:', error);
@@ -149,7 +143,7 @@ export async function searchMediaAction(
   }
 }
 
-export async function addToLibraryAction(item: UnifiedMediaItem, isBacklog: boolean = false) {
+export async function addToLibraryAction(item: UnifiedMediaItem) {
   try {
     const autoTags: string[] = [];
 
@@ -194,8 +188,6 @@ export async function addToLibraryAction(item: UnifiedMediaItem, isBacklog: bool
       autoTags.push(item.metadata.author);
     }
 
-    const customCreatedAt = isBacklog ? new Date('2026-01-17T16:27:25Z') : undefined;
-
     await mediaRepository.create({
       title: item.title,
       type: item.type,
@@ -206,7 +198,6 @@ export async function addToLibraryAction(item: UnifiedMediaItem, isBacklog: bool
         releaseDate: item.releaseDate,
       },
       tags: autoTags,
-      createdAt: customCreatedAt,
     });
 
     revalidatePaths();

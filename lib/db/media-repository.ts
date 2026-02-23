@@ -49,7 +49,7 @@ export const mediaRepository = {
         type: data.type,
         coverUrl: data.coverUrl,
         metadata: data.metadata ?? Prisma.JsonNull,
-        status: Status.COMPLETED,
+        status: Status.IN_PROGRESS,
         createdAt: data.createdAt,
         tags: {
           connectOrCreate: data.tags?.map((tag) => ({
