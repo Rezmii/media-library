@@ -26,6 +26,7 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { DashboardHeader } from './dashboard-header';
 import { MediaDetailsDialog } from './media-details-dialog';
+import { MediaFilterBar } from './media-filter-bar';
 
 interface LibraryViewProps {
   title: string;
@@ -36,21 +37,6 @@ interface LibraryViewProps {
 export function LibraryView({ title, items, icon }: LibraryViewProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [open, setOpen] = useState(false);
-
-  const tagCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    items.forEach((item) => {
-      item.tags.forEach((tag) => {
-        counts[tag] = (counts[tag] || 0) + 1;
-      });
-    });
-    return counts;
-  }, [items]);
-
-  const availableTags = useMemo(() => {
-    return Object.keys(tagCounts).sort();
-  }, [tagCounts]);
 
   const filteredItems = useMemo(() => {
     let result = items;
@@ -67,141 +53,37 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
   }, [items, selectedTags, showFavoritesOnly]);
 
   return (
-    <div className="space-y-8">
+    <div className="animate-in fade-in space-y-8 duration-500">
       <DashboardHeader title={title} count={items.length} icon={icon} />
 
-      <div className="flex items-center gap-2 pb-2">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="justify-between border-dashed border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-            >
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <span>Filtruj tagi</span>
-              </div>
-              {selectedTags.length > 0 && (
-                <>
-                  <Separator orientation="vertical" className="mx-2 h-4 bg-zinc-700" />
-                  <span className="rounded-sm bg-zinc-800 px-1 font-mono text-xs text-zinc-300">
-                    {selectedTags.length}
-                  </span>
-                </>
-              )}
-            </Button>
-          </PopoverTrigger>
+      {/* Użycie nowego komponentu */}
+      {items.length > 0 && (
+        <MediaFilterBar
+          items={items}
+          selectedTags={selectedTags}
+          onTagsChange={setSelectedTags}
+          showFavoritesOnly={showFavoritesOnly}
+          onFavoritesChange={setShowFavoritesOnly}
+        />
+      )}
 
-          <PopoverContent className="w-[200px] border-zinc-800 bg-zinc-950 p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Szukaj taga..." className="h-9" />
-              <CommandList>
-                <CommandEmpty>Nie znaleziono tagu.</CommandEmpty>
-                <CommandGroup>
-                  {availableTags.map((tag) => {
-                    const isSelected = selectedTags.includes(tag);
-                    return (
-                      <CommandItem
-                        key={tag}
-                        onSelect={() => {
-                          if (isSelected) {
-                            setSelectedTags((prev) => prev.filter((t) => t !== tag));
-                          } else {
-                            setSelectedTags((prev) => [...prev, tag]);
-                          }
-                        }}
-                        className="cursor-pointer"
-                      >
-                        <div
-                          className={cn(
-                            'border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
-                            isSelected
-                              ? 'bg-primary text-primary-foreground'
-                              : 'opacity-50 [&_svg]:invisible'
-                          )}
-                        >
-                          <Check className="h-3 w-3" />
-                        </div>
-                        <span>{tag}</span>
-                        <span className="text-muted-foreground ml-auto font-mono text-xs">
-                          {tagCounts[tag]}
-                        </span>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-
-                {selectedTags.length > 0 && (
-                  <>
-                    <CommandSeparator />
-                    <CommandGroup>
-                      <CommandItem
-                        onSelect={() => setSelectedTags([])}
-                        className="cursor-pointer justify-center text-center text-red-400 hover:text-red-300"
-                      >
-                        Wyczyść filtry
-                      </CommandItem>
-                    </CommandGroup>
-                  </>
-                )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          className={cn(
-            'h-9 border-dashed transition-all',
-            showFavoritesOnly
-              ? 'border-red-500/50 bg-red-950/30 text-red-400 hover:bg-red-900/50 hover:text-red-300'
-              : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
-          )}
-        >
-          <Heart className={cn('mr-2 h-4 w-4', showFavoritesOnly && 'fill-current')} />
-          Ulubione
-        </Button>
-
-        {selectedTags.map((tag) => (
-          <Badge
-            key={tag}
-            variant="secondary"
-            className="flex h-8 items-center gap-1 border border-emerald-500/30 bg-zinc-800 px-2 pl-3 text-sm text-emerald-400 hover:bg-zinc-800"
-          >
-            {tag}
-            <button
-              onClick={() => setSelectedTags((prev) => prev.filter((t) => t !== tag))}
-              className="ml-1 rounded-full p-0.5 text-emerald-500/50 transition-colors hover:bg-zinc-700 hover:text-emerald-400 focus:outline-none"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
-        ))}
-
-        {selectedTags.length > 0 && (
-          <Button
-            variant="ghost"
-            onClick={() => setSelectedTags([])}
-            className="h-8 px-2 text-xs text-zinc-500 hover:text-zinc-300"
-          >
-            Resetuj
-          </Button>
-        )}
-      </div>
-
+      {/* Pusty stan dla filtrów */}
       {filteredItems.length === 0 && items.length > 0 && (
         <div className="flex flex-col items-center gap-4 py-20 text-center">
-          <p className="text-zinc-500">Brak elementów zawierających wszystkie wybrane tagi.</p>
-          <Button variant="outline" onClick={() => setSelectedTags([])}>
+          <p className="text-zinc-500">Brak elementów spełniających kryteria filtrów.</p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedTags([]);
+              setShowFavoritesOnly(false);
+            }}
+          >
             Wyczyść filtry
           </Button>
         </div>
       )}
 
+      {/* Pusty stan dla braku elementów (Empty state) */}
       {items.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-800/50 bg-zinc-900/20 py-24 text-center">
           <div className="mb-4 rounded-full bg-zinc-900 p-4">
@@ -219,6 +101,7 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
         </div>
       )}
 
+      {/* Siatka z wynikami */}
       {filteredItems.length > 0 && (
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {filteredItems.map((item) => (
