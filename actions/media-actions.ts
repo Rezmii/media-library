@@ -320,3 +320,16 @@ export async function getMediaDetailsAction(
     return { success: false, data: null };
   }
 }
+
+export async function toggleFavoriteAction(id: string, isFavorite: boolean) {
+  try {
+    await mediaRepository.toggleFavorite(id, isFavorite);
+
+    revalidatePaths();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd zmiany ulubionych:', error);
+    return { success: false };
+  }
+}

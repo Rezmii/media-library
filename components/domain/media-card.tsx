@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+
 import Image from 'next/image';
 
-import { Check, Plus } from 'lucide-react';
+import { toggleFavoriteAction } from '@/actions/media-actions';
+import { Check, Heart, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { UnifiedMediaItem } from '@/core/types/media';
@@ -22,6 +25,22 @@ interface MediaCardProps {
 }
 
 export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
+  const [isFavorite, setIsFavorite] = useState(item.isFavorite || false);
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const newState = !isFavorite;
+    setIsFavorite(newState);
+
+    const result = await toggleFavoriteAction(item.externalId, newState);
+    if (!result.success) {
+      setIsFavorite(!newState); // Cofamy w razie błędu serwera
+      toast.error('Błąd zapisywania');
+    }
+  };
+
   const getSubtitle = () => {
     switch (item.type) {
       case 'ALBUM':
@@ -111,6 +130,21 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
               <MediaBadge type={item.type} />
 
               <StatusSelector id={item.externalId} currentStatus={item.status} />
+            </div>
+            <div
+              className="absolute bottom-2 left-2 z-20 transition-opacity duration-200"
+              onClick={handleToggleFavorite}
+            >
+              <button
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-full border bg-black/60 shadow-sm backdrop-blur-md transition-all hover:scale-110',
+                  isFavorite
+                    ? 'border-red-500/50 text-red-500'
+                    : 'border-white/10 text-zinc-400 opacity-0 group-hover:opacity-100 hover:border-red-500/30 hover:text-red-400'
+                )}
+              >
+                <Heart className={cn('h-4 w-4', isFavorite && 'fill-current')} />
+              </button>
             </div>
             <div className="absolute right-2 bottom-2 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               <DeleteMediaButton

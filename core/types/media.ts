@@ -9,6 +9,7 @@ export interface UnifiedMediaItem {
   addedAt?: string;
   metadata: Record<string, any>;
   isAdded?: boolean;
+  isFavorite?: boolean;
   popularityScore?: number;
 
   status?: Status;

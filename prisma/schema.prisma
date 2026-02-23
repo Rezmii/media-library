@@ -40,6 +40,8 @@ model MediaItem {
   rating      Int?      // Twoja ocena 1-5 (opcjonalna)
   note        String?   // Twoja notatka (opcjonalna)
 
+  isFavorite  Boolean  @default(false)
+
   metadata    Json?     
 
   tags        Tag[]

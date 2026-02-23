@@ -1,5 +1,14 @@
-// config/nav.ts
-import { BookOpen, Disc, Film, Gamepad2, LayoutGrid, Settings, Tags, Tv } from 'lucide-react';
+import {
+  BookOpen,
+  Disc,
+  Film,
+  Gamepad2,
+  Heart,
+  LayoutGrid,
+  Settings,
+  Tags,
+  Tv,
+} from 'lucide-react';
 
 export const navItems = [
   {
@@ -34,6 +43,11 @@ export const navItems = [
         title: 'Muzyka',
         href: '/music',
         icon: Disc,
+      },
+      {
+        title: 'Ulubione',
+        href: '/favorites',
+        icon: Heart,
       },
     ],
   },

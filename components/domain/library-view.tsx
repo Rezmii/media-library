@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { Check, Filter, FolderOpen, Plus, X, XCircle } from 'lucide-react';
+import { Check, Filter, FolderOpen, Heart, Plus, X } from 'lucide-react';
 
 import { UnifiedMediaItem } from '@/core/types/media';
 
@@ -35,6 +35,7 @@ interface LibraryViewProps {
 
 export function LibraryView({ title, items, icon }: LibraryViewProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [open, setOpen] = useState(false);
 
   const tagCounts = useMemo(() => {
@@ -52,9 +53,18 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
   }, [tagCounts]);
 
   const filteredItems = useMemo(() => {
-    if (selectedTags.length === 0) return items;
-    return items.filter((item) => selectedTags.every((tag) => item.tags.includes(tag)));
-  }, [items, selectedTags]);
+    let result = items;
+
+    if (showFavoritesOnly) {
+      result = result.filter((item) => item.isFavorite);
+    }
+
+    if (selectedTags.length > 0) {
+      result = result.filter((item) => selectedTags.every((tag) => item.tags.includes(tag)));
+    }
+
+    return result;
+  }, [items, selectedTags, showFavoritesOnly]);
 
   return (
     <div className="space-y-8">
@@ -140,6 +150,21 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
             </Command>
           </PopoverContent>
         </Popover>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+          className={cn(
+            'h-9 border-dashed transition-all',
+            showFavoritesOnly
+              ? 'border-red-500/50 bg-red-950/30 text-red-400 hover:bg-red-900/50 hover:text-red-300'
+              : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+          )}
+        >
+          <Heart className={cn('mr-2 h-4 w-4', showFavoritesOnly && 'fill-current')} />
+          Ulubione
+        </Button>
 
         {selectedTags.map((tag) => (
           <Badge

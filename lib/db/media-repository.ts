@@ -112,4 +112,11 @@ export const mediaRepository = {
       where: { id },
     });
   },
+
+  toggleFavorite: async (id: string, isFavorite: boolean) => {
+    return db.mediaItem.update({
+      where: { id },
+      data: { isFavorite },
+    });
+  },
 };

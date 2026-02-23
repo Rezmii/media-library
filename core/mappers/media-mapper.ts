@@ -24,6 +24,7 @@ export function mapDatabaseItemToUnified(dbItem: DbMediaItem): UnifiedMediaItem 
       year: 'numeric',
     }),
     isAdded: true,
+    isFavorite: dbItem.isFavorite,
     tags: dbItem.tags?.map((tag) => tag.name) || [],
   };
 }
