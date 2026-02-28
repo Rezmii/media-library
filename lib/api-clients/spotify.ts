@@ -83,7 +83,7 @@ export const spotifyClient = {
       const params = new URLSearchParams({
         q: query,
         type: 'album',
-        limit: '20',
+        limit: '10',
         market: 'PL',
       });
 
@@ -140,7 +140,6 @@ export const spotifyClient = {
               totalTracks: album.total_tracks,
               spotifyUrl: album.external_urls.spotify,
               subtype: preciseType,
-              popularityScore: album.popularity,
             },
             tags: ['Muzyka', preciseType],
           };
