@@ -23,6 +23,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "dotenv": "^17.2.3",
+    "framer-motion": "^12.36.0",
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.555.0",
     "next": "^16.0.7",
