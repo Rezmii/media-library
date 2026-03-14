@@ -121,6 +121,44 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
     }
   };
 
+  const hasSavedUserContent =
+    item.isAdded &&
+    ((item.rating && item.rating > 0) || (item.note && item.note.trim().length > 0));
+
+  const userSectionContent = item.isAdded ? (
+    <div className="space-y-6 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-6 shadow-sm">
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="space-y-3">
+          <label className="text-xs font-bold tracking-wider text-zinc-500 uppercase">
+            Twoja Ocena
+          </label>
+          <div className="origin-left scale-110">
+            <StarRating value={rating} onChange={handleRatingChange} />
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-xs font-bold tracking-wider text-zinc-500 uppercase">
+          Prywatna Notatka
+        </label>
+        <Textarea
+          placeholder="Tutaj możesz zapisać swoje przemyślenia, postępy lub recenzję..."
+          className="min-h-[120px] resize-none border-zinc-800 bg-zinc-950 text-base focus:border-emerald-500/50"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-6">
+      <h3 className="mb-2 text-lg font-bold text-zinc-200">Nie masz tego w bibliotece</h3>
+      <p className="mb-4 text-zinc-400">
+        Dodaj ten tytuł, aby móc śledzić postępy, wystawiać oceny i pisać notatki.
+      </p>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -270,6 +308,12 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                 </div>
               )}
             </div>
+
+            {hasSavedUserContent && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 mt-8 duration-500">
+                {userSectionContent}
+              </div>
+            )}
 
             <div className="h-px w-full bg-zinc-800/50" />
 
@@ -434,39 +478,7 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
             )}
 
             {/* 3. Sekcja Użytkownika */}
-            {item.isAdded ? (
-              <div className="mt-8 space-y-6 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-6">
-                <div className="grid gap-8 md:grid-cols-2">
-                  <div className="space-y-3">
-                    <label className="text-xs font-bold tracking-wider text-zinc-500 uppercase">
-                      Twoja Ocena
-                    </label>
-                    <div className="origin-left scale-110">
-                      <StarRating value={rating} onChange={handleRatingChange} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-xs font-bold tracking-wider text-zinc-500 uppercase">
-                    Prywatna Notatka
-                  </label>
-                  <Textarea
-                    placeholder="Tutaj możesz zapisać swoje przemyślenia, postępy lub recenzję..."
-                    className="min-h-[120px] resize-none border-zinc-800 bg-zinc-950 text-base focus:border-emerald-500/50"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-900/30 p-6">
-                <h3 className="mb-2 text-lg font-bold text-zinc-200">Nie masz tego w bibliotece</h3>
-                <p className="mb-4 text-zinc-400">
-                  Dodaj ten tytuł, aby móc śledzić postępy, wystawiać oceny i pisać notatki.
-                </p>
-              </div>
-            )}
+            {!hasSavedUserContent && <div className="mt-8">{userSectionContent}</div>}
 
             <hr className="border-zinc-800" />
 

@@ -179,6 +179,13 @@ export function MediaFilterBar({
     if (!open) setSearch('');
   }, [open]);
 
+  const dominantType = useMemo(() => {
+    if (items.length === 0) return 'ALL';
+    const firstType = items[0].type;
+    const allSame = items.every((item) => item.type === firstType);
+    return allSame ? firstType : 'ALL';
+  }, [items]);
+
   // Grupowanie tagów
   const groupedTags = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -202,6 +209,82 @@ export function MediaFilterBar({
 
     return groups;
   }, [items]);
+
+  const sortedCategories = useMemo(() => {
+    const categoryOrderMap: Record<string, string[]> = {
+      GAME: [
+        'Gatunki i Tematyka',
+        'Wydawcy i Studia',
+        'Typ medium',
+        'Okresy',
+        'Rok wydania',
+        'Inne tagi',
+        'Platformy',
+        'Twórcy',
+      ],
+      MOVIE: [
+        'Gatunki i Tematyka',
+        'Rok wydania',
+        'Twórcy',
+        'Wydawcy i Studia',
+        'Typ medium',
+        'Okresy',
+        'Inne tagi',
+      ],
+      SERIES: [
+        'Gatunki i Tematyka',
+        'Rok wydania',
+        'Twórcy',
+        'Wydawcy i Studia',
+        'Typ medium',
+        'Okresy',
+        'Inne tagi',
+      ],
+      BOOK: [
+        'Gatunki i Tematyka',
+        'Twórcy',
+        'Rok wydania',
+        'Typ medium',
+        'Okresy',
+        'Inne tagi',
+        'Wydawcy i Studia',
+      ],
+      ALBUM: [
+        'Twórcy',
+        'Gatunki i Tematyka',
+        'Rok wydania',
+        'Typ medium',
+        'Okresy',
+        'Inne tagi',
+        'Wydawcy i Studia',
+      ],
+      ALL: [
+        'Typ medium',
+        'Platformy',
+        'Gatunki i Tematyka',
+        'Twórcy',
+        'Wydawcy i Studia',
+        'Rok wydania',
+        'Okresy',
+        'Inne tagi',
+      ],
+    };
+
+    const preferredOrder = categoryOrderMap[dominantType] || categoryOrderMap['ALL'];
+
+    return Object.keys(groupedTags).sort((a, b) => {
+      const indexA = preferredOrder.indexOf(a);
+      const indexB = preferredOrder.indexOf(b);
+
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+      if (indexA !== -1) return -1;
+
+      if (indexB !== -1) return 1;
+
+      return a.localeCompare(b);
+    });
+  }, [groupedTags, dominantType]);
 
   const toggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -255,8 +338,9 @@ export function MediaFilterBar({
               <CommandList className="custom-scrollbar max-h-[400px] overflow-y-auto">
                 <CommandEmpty>Nie znaleziono tagu.</CommandEmpty>
 
-                {Object.entries(groupedTags).map(([category, tagsArray]) => {
-                  if (tagsArray.length === 0) return null;
+                {sortedCategories.map((category) => {
+                  const tagsArray = groupedTags[category];
+                  if (!tagsArray || tagsArray.length === 0) return null;
 
                   // Kategoria jest rozwinięta jeśli użyto wyszukiwarki LUB ręcznie rozwinięto
                   const isExpanded = search.length > 0 || expandedCategories.includes(category);

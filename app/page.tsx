@@ -100,6 +100,8 @@ export default async function Dashboard() {
               count = items.filter((i) => i.type === 'ALBUM').length;
             else if (category.href.includes('series'))
               count = items.filter((i) => i.type === 'SERIES').length;
+            else if (category.href.includes('favorites'))
+              count = items.filter((i) => i.isFavorite).length;
 
             return (
               <Link
