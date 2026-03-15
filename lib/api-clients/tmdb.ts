@@ -7,6 +7,7 @@ const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_BASE_URL = 'https://image.tmdb.org/t/p/w1280';
 
 interface TmdbCastMember {
+  id: number;
   name: string;
   character: string;
   profile_path: string | null;
@@ -14,6 +15,7 @@ interface TmdbCastMember {
 }
 
 interface TmdbCrewMember {
+  id: number;
   name: string;
   job: string;
 }
@@ -148,15 +150,20 @@ export const tmdbClient = {
       const genres = data.genres.map((g) => g.name);
 
       const cast = data.credits.cast.slice(0, 10).map((actor) => ({
+        id: actor.id,
         name: actor.name,
         character: actor.character,
         photoUrl: actor.profile_path ? `${IMAGE_BASE_URL}${actor.profile_path}` : null,
       }));
 
       let director: string | undefined = undefined;
+      let directorId: number | undefined = undefined;
       if (type === 'MOVIE') {
         const directorObj = data.credits.crew.find((c) => c.job === 'Director');
-        if (directorObj) director = directorObj.name;
+        if (directorObj) {
+          director = directorObj.name;
+          directorId = directorObj.id;
+        }
       }
 
       const runtime =
@@ -176,6 +183,7 @@ export const tmdbClient = {
         genres,
         cast,
         director,
+        directorId,
         runtime,
         seasons,
         status: data.status,

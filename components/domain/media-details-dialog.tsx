@@ -50,6 +50,13 @@ interface MediaDetailsDialogProps {
   onAdd?: (item: UnifiedMediaItem) => void;
 }
 
+const getTmdbPersonUrl = (id?: number, name?: string) => {
+  if (id) return `https://www.themoviedb.org/person/${id}`;
+
+  if (name) return `https://www.themoviedb.org/search/person?query=${encodeURIComponent(name)}`;
+  return '#';
+};
+
 export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialogProps) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(item.note || '');
@@ -380,7 +387,14 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                     <div className="flex items-center gap-2">
                       <Clapperboard className="h-5 w-5 text-emerald-500" />
                       <span className="text-zinc-500">Reżyseria:</span>
-                      <span className="font-medium text-zinc-200">{details.director}</span>
+                      <a
+                        href={getTmdbPersonUrl(details.directorId, details.director)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-zinc-200 underline-offset-4 transition-colors hover:text-emerald-400 hover:underline"
+                      >
+                        {details.director}
+                      </a>
                     </div>
                   )}
 
@@ -442,17 +456,19 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                     {/* Grid aktorów */}
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                       {details.cast.map((actor) => (
-                        <div
+                        <a
                           key={actor.name}
-                          className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900"
+                          href={getTmdbPersonUrl(actor.id, actor.name)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900 transition-transform hover:scale-[1.02] active:scale-95"
                         >
                           {actor.photoUrl ? (
                             <Image
                               src={actor.photoUrl}
                               alt={actor.name}
                               fill
-                              className="object-cover transition-transform duration-500 group-hover:scale-105"
-                              unoptimized
+                              className="object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center bg-zinc-800 text-zinc-700">
@@ -460,16 +476,15 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                             </div>
                           )}
 
-                          {/* Overlay z nazwiskiem */}
-                          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2 opacity-100">
-                            <span className="text-sm leading-tight font-bold text-white">
+                          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/95 via-black/40 to-transparent p-2">
+                            <span className="text-sm leading-tight font-bold text-white transition-colors group-hover:text-emerald-400">
                               {actor.name}
                             </span>
                             <span className="truncate text-xs text-zinc-400">
                               {actor.character}
                             </span>
                           </div>
-                        </div>
+                        </a>
                       ))}
                     </div>
                   </div>

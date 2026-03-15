@@ -28,8 +28,9 @@ export interface UnifiedMediaDetails {
   tracks?: { title: string; duration: number; features: string[] }[];
 
   // Filmy i Seriale (TMDB)
-  cast?: { name: string; character: string; photoUrl: string | null }[];
+  cast?: { id: number; name: string; character: string; photoUrl: string | null }[];
   director?: string;
+  directorId?: number;
   runtime?: number;
 
   // Tylko Seriale
