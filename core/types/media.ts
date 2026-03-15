@@ -39,6 +39,7 @@ export interface UnifiedMediaDetails {
     episodeCount: number;
     airDate: string;
     posterUrl: string | null;
+    seasonNumber: number;
   }[];
   status?: string;
   description?: string;

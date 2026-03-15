@@ -177,6 +177,7 @@ export const tmdbClient = {
           episodeCount: s.episode_count,
           airDate: s.air_date?.split('-')[0] || '?',
           posterUrl: s.poster_path ? `${IMAGE_BASE_URL}${s.poster_path}` : null,
+          seasonNumber: s.season_number,
         }));
 
       return {

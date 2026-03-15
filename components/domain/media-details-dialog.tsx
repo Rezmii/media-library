@@ -6,11 +6,13 @@ import Image from 'next/image';
 
 import { updateMediaDetailsAction } from '@/actions/media-actions';
 import { getMediaDetailsAction } from '@/actions/media-actions';
+import { updateCompletedSeasonsAction, updateStatusAction } from '@/actions/media-actions';
 import {
   AlignLeft,
   BookOpen,
   Calendar,
   CalendarPlus,
+  Check,
   Clapperboard,
   Clock,
   Disc,
@@ -65,6 +67,48 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
 
   const [details, setDetails] = useState<UnifiedMediaDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  const [completedSeasons, setCompletedSeasons] = useState<number[]>(
+    (item.metadata?.completedSeasons as number[]) || []
+  );
+
+  useEffect(() => {
+    if (item.status === 'COMPLETED' && details?.seasons) {
+      const allSeasonNumbers = details.seasons.map((s) => s.seasonNumber);
+
+      if (completedSeasons.length !== allSeasonNumbers.length) {
+        setCompletedSeasons(allSeasonNumbers);
+        if (item.isAdded) {
+          updateCompletedSeasonsAction(item.externalId, allSeasonNumbers);
+        }
+      }
+    }
+  }, [item.status, details?.seasons]);
+
+  const handleToggleSeason = async (seasonNumber: number) => {
+    if (!item.isAdded) {
+      toast.error('Najpierw dodaj serial do biblioteki!');
+      return;
+    }
+
+    const isCompleted = completedSeasons.includes(seasonNumber);
+    const newCompleted = isCompleted
+      ? completedSeasons.filter((n) => n !== seasonNumber)
+      : [...completedSeasons, seasonNumber];
+
+    setCompletedSeasons(newCompleted);
+
+    await updateCompletedSeasonsAction(item.externalId, newCompleted);
+
+    const allSeasonNumbers = details?.seasons?.map((s) => s.seasonNumber) || [];
+    const isAllCompleted =
+      allSeasonNumbers.length > 0 && allSeasonNumbers.every((n) => newCompleted.includes(n));
+
+    if (isAllCompleted && item.status !== 'COMPLETED') {
+      await updateStatusAction(item.externalId, 'COMPLETED');
+      toast.success('Wszystkie sezony obejrzane! Zmieniono status na Ukończone 🎉');
+    }
+  };
 
   useEffect(() => {
     if (open && !details) {
@@ -416,32 +460,63 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                       <Tv className="h-5 w-5 text-emerald-500" /> Sezony
                     </h3>
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                      {details.seasons.map((season) => (
-                        <div
-                          key={season.name}
-                          className="flex gap-3 rounded-lg border border-zinc-800/50 bg-zinc-900/50 p-2"
-                        >
-                          {season.posterUrl ? (
-                            <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded">
-                              <Image
-                                src={season.posterUrl}
-                                alt={season.name}
-                                fill
-                                className="object-cover"
-                                unoptimized
-                              />
+                      {details.seasons.map((season) => {
+                        const isCompleted = completedSeasons.includes(season.seasonNumber);
+
+                        return (
+                          <div
+                            key={season.name}
+                            className="group flex gap-3 rounded-lg border border-zinc-800/50 bg-zinc-900/50 p-2"
+                          >
+                            {/* POSTER (Z przyciskiem Toggle) */}
+                            <div
+                              className="relative h-16 w-12 shrink-0 cursor-pointer overflow-hidden rounded shadow-sm"
+                              onClick={() => handleToggleSeason(season.seasonNumber)}
+                              title={
+                                isCompleted ? 'Oznacz jako nieobejrzany' : 'Oznacz jako obejrzany'
+                              }
+                            >
+                              {season.posterUrl ? (
+                                <Image
+                                  src={season.posterUrl}
+                                  alt={season.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <div className="h-16 w-12 shrink-0 rounded bg-zinc-800" />
+                              )}
+
+                              {/* OVERLAY: Elegancki Ptaszek */}
+                              <div
+                                className={cn(
+                                  'absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full border transition-all duration-200',
+                                  isCompleted
+                                    ? 'scale-100 border-emerald-500 bg-emerald-500/90 text-white shadow-md shadow-emerald-500/20'
+                                    : 'scale-90 border-white/40 bg-black/40 text-transparent group-hover:scale-100 group-hover:border-white/80 group-hover:text-white/60'
+                                )}
+                              >
+                                <Check className="h-3 w-3 stroke-[3]" />
+                              </div>
                             </div>
-                          ) : (
-                            <div className="h-16 w-12 shrink-0 rounded bg-zinc-800" />
-                          )}
-                          <div className="flex flex-col justify-center">
-                            <span className="text-sm font-bold text-zinc-200">{season.name}</span>
-                            <span className="text-xs text-zinc-500">
-                              {season.episodeCount} odc. • {season.airDate}
-                            </span>
+
+                            {/* INFO O SEZONIE */}
+                            <div className="flex flex-col justify-center">
+                              <span
+                                className={cn(
+                                  'text-sm font-bold transition-colors',
+                                  isCompleted ? 'text-emerald-400' : 'text-zinc-200'
+                                )}
+                              >
+                                {season.name}
+                              </span>
+                              <span className="text-xs text-zinc-500">
+                                {season.episodeCount} odc. • {season.airDate}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

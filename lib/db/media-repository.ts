@@ -119,4 +119,17 @@ export const mediaRepository = {
       data: { isFavorite },
     });
   },
+
+  updateCompletedSeasons: async (id: string, completedSeasons: number[]) => {
+    const item = await db.mediaItem.findUnique({ where: { id } });
+    if (!item) return;
+
+    const metadata = (item.metadata as Record<string, any>) || {};
+    metadata.completedSeasons = completedSeasons;
+
+    return db.mediaItem.update({
+      where: { id },
+      data: { metadata },
+    });
+  },
 };

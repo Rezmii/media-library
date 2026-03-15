@@ -333,3 +333,14 @@ export async function toggleFavoriteAction(id: string, isFavorite: boolean) {
     return { success: false };
   }
 }
+
+export async function updateCompletedSeasonsAction(id: string, completedSeasons: number[]) {
+  try {
+    await mediaRepository.updateCompletedSeasons(id, completedSeasons);
+    revalidatePaths();
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd aktualizacji sezonów:', error);
+    return { success: false };
+  }
+}
