@@ -43,13 +43,14 @@ export const mediaRepository = {
 
   // Dodawanie nowego elementu
   create: async (data: CreateMediaInput) => {
+    const defaultStatus = data.type === 'MOVIE' ? Status.COMPLETED : Status.IN_PROGRESS;
     return await db.mediaItem.create({
       data: {
         title: data.title,
         type: data.type,
         coverUrl: data.coverUrl,
         metadata: data.metadata ?? Prisma.JsonNull,
-        status: Status.IN_PROGRESS,
+        status: defaultStatus,
         createdAt: data.createdAt,
         tags: {
           connectOrCreate: data.tags?.map((tag) => ({
