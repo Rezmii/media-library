@@ -67,19 +67,31 @@ export const tmdbClient = {
     if (!API_KEY) throw new Error('Brak TMDB_API_KEY w .env');
 
     try {
-      const response = await fetch(
-        `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&language=pl-PL`
-      );
+      // TMDB z language=pl-PL filtruje wyniki tylko do pozycji z polskim tlumaczeniem,
+      // przez co znikaja klasyczne anime (Naruto 2002, Pokemon 1997, Dragon Ball Z 1989
+      // itd.). Wykonujemy 2 zapytania rownolegle: en-US ma wszystko (baza), pl-PL
+      // nadpisuje pojedyncze itemy polskimi tytulami tam gdzie istnieja
+      // (np. "Pokemon: Detektyw Pikachu").
+      const buildUrl = (lang: string) =>
+        `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&language=${lang}`;
 
-      if (!response.ok) {
-        throw new Error(`TMDB Error: ${response.statusText}`);
+      const [enRes, plRes] = await Promise.all([fetch(buildUrl('en-US')), fetch(buildUrl('pl-PL'))]);
+
+      if (!enRes.ok && !plRes.ok) {
+        throw new Error(`TMDB Error: ${enRes.statusText}`);
       }
 
-      const data: TmdbSearchResponse = await response.json();
+      const enData: TmdbSearchResponse = enRes.ok ? await enRes.json() : { results: [] };
+      const plData: TmdbSearchResponse = plRes.ok ? await plRes.json() : { results: [] };
+
+      // Merge po id: EN jako baza, PL nadpisuje (zachowuje polskie tytuly)
+      const merged = new Map<number, TmdbResult>();
+      enData.results.forEach((item) => merged.set(item.id, item));
+      plData.results.forEach((item) => merged.set(item.id, item));
 
       const allCandidates: TmdbResult[] = [];
 
-      data.results.forEach((item) => {
+      Array.from(merged.values()).forEach((item) => {
         if (item.media_type === 'person' && item.known_for) {
           allCandidates.push(...item.known_for);
         } else if (item.media_type === 'movie' || item.media_type === 'tv') {
