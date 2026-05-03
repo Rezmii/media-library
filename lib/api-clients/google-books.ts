@@ -2,6 +2,15 @@
 const API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
 const BASE_URL = 'https://www.googleapis.com/books/v1/volumes';
 
+// Google Books domyślnie zwraca thumbnail z zoom=1 (~128 px). zoom=3 daje ~512 px tej samej okładki.
+function upscaleGoogleBooksCover(url: string | undefined): string | undefined {
+  if (!url || !url.includes('books.google.')) return url;
+  if (/[?&]zoom=\d+/.test(url)) {
+    return url.replace(/([?&])zoom=\d+/, '$1zoom=3');
+  }
+  return url + (url.includes('?') ? '&' : '?') + 'zoom=3';
+}
+
 export const googleBooksClient = {
   enrichBookData: async (isbn?: string, title?: string, author?: string) => {
     if (!API_KEY) return null;
@@ -31,7 +40,9 @@ export const googleBooksClient = {
         description: info.description,
         pageCount: info.pageCount,
         averageRating: info.averageRating,
-        thumbnail: info.imageLinks?.thumbnail?.replace('http:', 'https:').replace('&edge=curl', ''),
+        thumbnail: upscaleGoogleBooksCover(
+          info.imageLinks?.thumbnail?.replace('http:', 'https:').replace('&edge=curl', '')
+        ),
         publisher: info.publisher,
       };
     } catch (error) {

@@ -218,15 +218,35 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
 
       <DialogContent className="flex h-[95vh] w-[95vw] flex-col gap-0 overflow-hidden border-zinc-800 bg-zinc-950 p-0 md:h-[80vh] md:w-[80vw] md:max-w-[80vw] md:flex-row">
         <DialogTitle className="sr-only">{item.title}</DialogTitle>
-        <div className="relative h-48 w-full shrink-0 bg-zinc-900 md:h-full md:w-[40%] lg:w-[35%]">
+        <div className="relative h-48 w-full shrink-0 overflow-hidden bg-zinc-900 md:h-full md:w-[40%] lg:w-[35%]">
           {heroImage ? (
-            <Image
-              src={heroImage}
-              alt={item.title}
-              fill
-              className="object-cover opacity-90 md:opacity-100"
-              unoptimized
-            />
+            item.type === 'BOOK' ? (
+              <>
+                <Image
+                  src={heroImage}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  className="scale-110 object-cover opacity-50 blur-2xl"
+                  unoptimized
+                />
+                <Image
+                  src={heroImage}
+                  alt={item.title}
+                  fill
+                  className="object-contain p-4 md:p-8"
+                  unoptimized
+                />
+              </>
+            ) : (
+              <Image
+                src={heroImage}
+                alt={item.title}
+                fill
+                className="object-cover opacity-90 md:opacity-100"
+                unoptimized
+              />
+            )
           ) : (
             <div className="flex h-full items-center justify-center text-xl font-bold text-zinc-700">
               Brak zdjęcia
