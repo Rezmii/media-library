@@ -310,13 +310,21 @@ export async function getMediaDetailsAction(
           runtime: tmdbData.runtime,
           seasons: tmdbData.seasons,
           status: tmdbData.status,
+          screenshots: tmdbData.screenshots,
         };
       }
     }
 
     if (type === 'GAME') {
-      const additions = await rawgClient.getAdditions(externalId);
-      details = { additions };
+      const [additions, gameDetails] = await Promise.all([
+        rawgClient.getAdditions(externalId),
+        rawgClient.getDetails(externalId),
+      ]);
+      details = {
+        additions,
+        publisher: gameDetails.publisher || undefined,
+        screenshots: gameDetails.screenshots,
+      };
     }
 
     return { success: true, data: details };

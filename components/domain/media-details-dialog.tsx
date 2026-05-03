@@ -10,6 +10,7 @@ import { updateCompletedSeasonsAction, updateStatusAction } from '@/actions/medi
 import {
   AlignLeft,
   BookOpen,
+  Building2,
   Calendar,
   CalendarPlus,
   Check,
@@ -17,6 +18,7 @@ import {
   Clock,
   Disc,
   ExternalLink,
+  Images,
   ListMusic,
   Loader2,
   Package,
@@ -354,6 +356,15 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                       {item.metadata.playtime}h
                     </span>
                   )}
+                  {item.type === 'GAME' && details?.publisher && (
+                    <span
+                      className="flex items-center gap-2 text-zinc-400"
+                      title="Wydawca"
+                    >
+                      <Building2 className="h-4 w-4" />
+                      {details.publisher}
+                    </span>
+                  )}
                   <span className="font-medium text-zinc-300">
                     {item.type === 'GAME' && (item.metadata.platforms as string[])?.join(', ')}
                     {item.type === 'BOOK' && item.metadata.author}
@@ -652,8 +663,6 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
             {/* 3. Sekcja Użytkownika */}
             {!hasSavedUserContent && <div className="mt-8">{userSectionContent}</div>}
 
-            <hr className="border-zinc-800" />
-
             {item.isAdded && (
               <>
                 <hr className="my-6 border-zinc-800" />
@@ -661,6 +670,31 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                   <TagManager itemId={item.externalId} initialTags={item.tags} />
                 </div>
               </>
+            )}
+
+            {/* Zrzuty ekranu (gry / filmy / seriale) — max 4, układ 2x2 na desktopie */}
+            {details?.screenshots && details.screenshots.length > 0 && (
+              <div className="mt-8">
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-zinc-200">
+                  <Images className="h-5 w-5 text-emerald-500" /> Zrzuty ekranu
+                </h3>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {details.screenshots.slice(0, 4).map((url, i) => (
+                    <div
+                      key={i}
+                      className="relative aspect-video overflow-hidden rounded-lg bg-zinc-900 ring-1 ring-zinc-800"
+                    >
+                      <Image
+                        src={url}
+                        alt={`Zrzut ekranu ${i + 1}`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 

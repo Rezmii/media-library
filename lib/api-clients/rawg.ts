@@ -94,17 +94,52 @@ export const rawgClient = {
 
       const data: { results: RawgAddition[] } = await response.json();
 
-      return (data.results || []).map((addition) => ({
-        externalId: addition.id.toString(),
-        title: addition.name,
-        coverUrl: addition.background_image,
-        releaseDate: addition.released?.split('-')[0],
-        rating: addition.rating,
-        metacritic: addition.metacritic,
-      }));
+      return (data.results || [])
+        .filter((addition) => !/\bdemo\b/i.test(addition.name))
+        .map((addition) => ({
+          externalId: addition.id.toString(),
+          title: addition.name,
+          coverUrl: addition.background_image,
+          releaseDate: addition.released?.split('-')[0],
+          rating: addition.rating,
+          metacritic: addition.metacritic,
+        }));
     } catch (error) {
       console.error('Błąd RAWG additions:', error);
       return [];
+    }
+  },
+
+  // Pobiera szczegoly gry: publisher (pierwszy z listy) i do 4 screenshotow.
+  // Dwa zapytania rownolegle: /games/{id} i /games/{id}/screenshots.
+  getDetails: async (
+    gameId: string
+  ): Promise<{ publisher: string | null; screenshots: string[] }> => {
+    if (!API_KEY) return { publisher: null, screenshots: [] };
+
+    try {
+      const [gameRes, screenshotsRes] = await Promise.all([
+        fetch(`${BASE_URL}/games/${gameId}?key=${API_KEY}`),
+        fetch(`${BASE_URL}/games/${gameId}/screenshots?key=${API_KEY}`),
+      ]);
+
+      let publisher: string | null = null;
+      let screenshots: string[] = [];
+
+      if (gameRes.ok) {
+        const gameData: { publishers?: { name: string }[] } = await gameRes.json();
+        publisher = gameData.publishers?.[0]?.name || null;
+      }
+
+      if (screenshotsRes.ok) {
+        const data: { results?: { image: string }[] } = await screenshotsRes.json();
+        screenshots = (data.results || []).slice(0, 4).map((s) => s.image);
+      }
+
+      return { publisher, screenshots };
+    } catch (error) {
+      console.error('Błąd RAWG getDetails:', error);
+      return { publisher: null, screenshots: [] };
     }
   },
 };

@@ -53,4 +53,10 @@ export interface UnifiedMediaDetails {
     rating?: number;
     metacritic?: number | null;
   }[];
+
+  // Tylko Gry — wydawca (z RAWG game details)
+  publisher?: string;
+
+  // Filmy / Seriale / Gry — zrzuty ekranu (max 4)
+  screenshots?: string[];
 }

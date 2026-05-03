@@ -28,6 +28,10 @@ interface TmdbSeason {
   season_number: number;
 }
 
+interface TmdbImage {
+  file_path: string;
+}
+
 interface TmdbDetailsResponse {
   genres: { name: string }[];
   runtime?: number;
@@ -38,6 +42,9 @@ interface TmdbDetailsResponse {
   };
   seasons?: TmdbSeason[];
   status?: string;
+  images?: {
+    backdrops: TmdbImage[];
+  };
 }
 
 interface TmdbResult {
@@ -152,7 +159,9 @@ export const tmdbClient = {
     try {
       const endpoint = type === 'MOVIE' ? 'movie' : 'tv';
 
-      const url = `${BASE_URL}/${endpoint}/${externalId}?api_key=${API_KEY}&language=pl-PL&append_to_response=credits`;
+      // include_image_language=en,null - bez tego TMDB filtruje obrazki po language=pl-PL
+      // i zwraca pusto dla wiekszosci tytulow. "null" = backdropy bez tekstu (najlepsze).
+      const url = `${BASE_URL}/${endpoint}/${externalId}?api_key=${API_KEY}&language=pl-PL&append_to_response=credits,images&include_image_language=en,null`;
 
       const res = await fetch(url);
       if (!res.ok) return null;
@@ -192,6 +201,10 @@ export const tmdbClient = {
           seasonNumber: s.season_number,
         }));
 
+      const screenshots = (data.images?.backdrops || [])
+        .slice(0, 4)
+        .map((b) => `${BACKDROP_BASE_URL}${b.file_path}`);
+
       return {
         genres,
         cast,
@@ -200,6 +213,7 @@ export const tmdbClient = {
         runtime,
         seasons,
         status: data.status,
+        screenshots,
       };
     } catch (error) {
       console.error('Błąd TMDB getDetails:', error);
