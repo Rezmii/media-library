@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -24,8 +24,38 @@ interface MediaCardProps {
   isAdded?: boolean;
 }
 
+// Szacunkowa szerokość komponentu RatingBadge (Star + cyfra + gap-1) w px.
+// Zaokrąglone w górę żeby uniknąć drgań przy resize.
+const RATING_BADGE_WIDTH = 38;
+
 export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
   const [isFavorite, setIsFavorite] = useState(item.isFavorite || false);
+
+  // Czy ocena mieści się w wierszu z tytułem, czy musi spaść do wiersza subtitle.
+  // Default 'subtitle' = bezpieczne (nie szarpie się przy pierwszym renderze, jeśli ocena jest długa).
+  const [ratingPlacement, setRatingPlacement] = useState<'title' | 'subtitle'>('subtitle');
+  const titleRowRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (item.rating == null) return;
+    const row = titleRowRef.current;
+    const title = titleRef.current;
+    if (!row || !title) return;
+
+    const check = () => {
+      // scrollWidth = naturalna szerokość tytułu (ignoruje truncate).
+      // clientWidth wiersza = pełna dostępna szerokość (stała, niezależna od placement).
+      setRatingPlacement(
+        title.scrollWidth + RATING_BADGE_WIDTH <= row.clientWidth ? 'title' : 'subtitle'
+      );
+    };
+
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [item.title, item.rating]);
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -162,17 +192,29 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
       </div>
 
       <div className="mt-1 flex flex-col gap-1.5 px-1">
-        <h3
-          className={cn(
-            'truncate text-sm leading-tight font-semibold text-zinc-100 transition-colors'
+        <div ref={titleRowRef} className="flex items-center justify-between gap-2">
+          <h3
+            ref={titleRef}
+            className={cn(
+              'truncate text-sm leading-tight font-semibold text-zinc-100 transition-colors'
+            )}
+            title={item.title}
+          >
+            {item.title}
+          </h3>
+          {item.rating != null && ratingPlacement === 'title' && (
+            <div
+              className="flex shrink-0 items-center gap-1 text-sm font-medium text-zinc-300"
+              title={`Twoja ocena: ${item.rating}/5`}
+            >
+              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+              <span>{item.rating}</span>
+            </div>
           )}
-          title={item.title}
-        >
-          {item.title}
-        </h3>
+        </div>
         <div className="flex items-center justify-between gap-2">
           <p className="text-md truncate font-medium text-zinc-400">{getSubtitle()}</p>
-          {item.rating != null && (
+          {item.rating != null && ratingPlacement === 'subtitle' && (
             <div
               className="flex shrink-0 items-center gap-1 text-sm font-medium text-zinc-300"
               title={`Twoja ocena: ${item.rating}/5`}
