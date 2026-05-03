@@ -24,6 +24,9 @@ function revalidatePaths() {
   revalidatePath('/music');
 }
 
+// Klucz: `${type}:${externalId}`. Compound key bo TMDB ma osobne przestrzenie ID
+// dla movie/tv (np. movie/1402 = "W pogoni za szczęściem", tv/1402 = "The Walking
+// Dead") i bez typu fałszywie oznaczalibyśmy itemy jako już dodane.
 async function getExistingLibraryIds(): Promise<Set<string>> {
   const allItems = await mediaRepository.getAll();
 
@@ -33,7 +36,7 @@ async function getExistingLibraryIds(): Promise<Set<string>> {
     const meta = item.metadata as Record<string, any>;
 
     if (meta && meta.externalId) {
-      ids.add(meta.externalId);
+      ids.add(`${item.type}:${meta.externalId}`);
     }
   });
 
@@ -134,7 +137,7 @@ export async function searchMediaAction(
     return fusedResults
       .map((result) => ({
         ...result.item,
-        isAdded: existingIds.has(result.item.externalId),
+        isAdded: existingIds.has(`${result.item.type}:${result.item.externalId}`),
       }))
       .slice(0, 20);
   } catch (error) {
