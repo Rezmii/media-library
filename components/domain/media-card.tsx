@@ -78,7 +78,7 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
       case 'BOOK':
         return item.metadata.author;
       case 'GAME':
-        return item.metadata.platforms?.[0] || 'PC';
+        return item.metadata.categories?.[0] || item.metadata.platforms?.[0] || 'Gra';
       case 'MOVIE':
       case 'SERIES':
         return item.releaseDate;
