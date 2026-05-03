@@ -90,6 +90,12 @@ export const mediaRepository = {
     });
   },
 
+  count: async (type?: MediaType) => {
+    return db.mediaItem.count({
+      where: type ? { type } : undefined,
+    });
+  },
+
   addTag: async (mediaId: string, tagName: string) => {
     return db.mediaItem.update({
       where: { id: mediaId },
