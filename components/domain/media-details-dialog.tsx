@@ -19,6 +19,7 @@ import {
   ExternalLink,
   ListMusic,
   Loader2,
+  Package,
   Plus,
   Save,
   Tv,
@@ -584,6 +585,67 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* DLC i wydania (gry) */}
+            {item.type === 'GAME' && details?.additions && details.additions.length > 0 && (
+              <div className="mt-8">
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-zinc-200">
+                  <Package className="h-5 w-5 text-emerald-500" /> DLC i wydania
+                </h3>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {details.additions.map((addition) => {
+                    const additionItem: UnifiedMediaItem = {
+                      externalId: addition.externalId,
+                      type: 'GAME',
+                      title: addition.title,
+                      coverUrl: addition.coverUrl,
+                      releaseDate: addition.releaseDate,
+                      metadata: {
+                        isDLC: true,
+                        parentGameId: item.externalId,
+                        parentGameTitle: item.title,
+                        platforms: [],
+                        playtime: 0,
+                        rawgRating: addition.rating?.toFixed(2),
+                        metacritic: addition.metacritic,
+                      },
+                      tags: [],
+                    };
+
+                    return (
+                      <MediaDetailsDialog key={addition.externalId} item={additionItem}>
+                        <div className="group cursor-pointer">
+                          <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-zinc-900 ring-1 ring-zinc-800 transition-all group-hover:scale-[1.02] group-hover:ring-emerald-500/50">
+                            {addition.coverUrl ? (
+                              <Image
+                                src={addition.coverUrl}
+                                alt={addition.title}
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-xs text-zinc-700">
+                                Brak okładki
+                              </div>
+                            )}
+                          </div>
+                          <p
+                            className="mt-2 line-clamp-2 text-sm font-medium text-zinc-200 transition-colors group-hover:text-emerald-400"
+                            title={addition.title}
+                          >
+                            {addition.title}
+                          </p>
+                          {addition.releaseDate && (
+                            <p className="text-xs text-zinc-500">{addition.releaseDate}</p>
+                          )}
+                        </div>
+                      </MediaDetailsDialog>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

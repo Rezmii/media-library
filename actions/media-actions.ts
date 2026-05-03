@@ -314,6 +314,11 @@ export async function getMediaDetailsAction(
       }
     }
 
+    if (type === 'GAME') {
+      const additions = await rawgClient.getAdditions(externalId);
+      details = { additions };
+    }
+
     return { success: true, data: details };
   } catch (error) {
     console.error(`Błąd pobierania detali dla ${type}:`, error);

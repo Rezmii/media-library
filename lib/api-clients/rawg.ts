@@ -21,6 +21,24 @@ interface RawgSearchResponse {
   results: RawgGame[];
 }
 
+interface RawgAddition {
+  id: number;
+  name: string;
+  background_image: string | null;
+  released: string | null;
+  rating: number;
+  metacritic: number | null;
+}
+
+export interface UnifiedAddition {
+  externalId: string;
+  title: string;
+  coverUrl: string | null;
+  releaseDate?: string;
+  rating?: number;
+  metacritic?: number | null;
+}
+
 export const rawgClient = {
   searchGames: async (query: string): Promise<UnifiedMediaItem[]> => {
     if (!API_KEY) throw new Error('Brak RAWG_API_KEY w .env');
@@ -58,6 +76,34 @@ export const rawgClient = {
         }));
     } catch (error) {
       console.error('Błąd w rawgClient:', error);
+      return [];
+    }
+  },
+
+  // Pobiera DLC, edycje GOTY, expansiony i inne dodatki dla danej gry.
+  // RAWG endpoint: /games/{id}/additions
+  getAdditions: async (gameId: string): Promise<UnifiedAddition[]> => {
+    if (!API_KEY) return [];
+
+    try {
+      const response = await fetch(
+        `${BASE_URL}/games/${gameId}/additions?key=${API_KEY}&page_size=20`
+      );
+
+      if (!response.ok) return [];
+
+      const data: { results: RawgAddition[] } = await response.json();
+
+      return (data.results || []).map((addition) => ({
+        externalId: addition.id.toString(),
+        title: addition.name,
+        coverUrl: addition.background_image,
+        releaseDate: addition.released?.split('-')[0],
+        rating: addition.rating,
+        metacritic: addition.metacritic,
+      }));
+    } catch (error) {
+      console.error('Błąd RAWG additions:', error);
       return [];
     }
   },

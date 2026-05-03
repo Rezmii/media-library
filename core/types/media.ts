@@ -43,4 +43,14 @@ export interface UnifiedMediaDetails {
   }[];
   status?: string;
   description?: string;
+
+  // Tylko Gry — DLC, edycje GOTY, expansiony (z RAWG additions)
+  additions?: {
+    externalId: string;
+    title: string;
+    coverUrl: string | null;
+    releaseDate?: string;
+    rating?: number;
+    metacritic?: number | null;
+  }[];
 }
