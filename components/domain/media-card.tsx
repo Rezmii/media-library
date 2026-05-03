@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 
 import { toggleFavoriteAction } from '@/actions/media-actions';
-import { Check, Heart, Loader2, Plus } from 'lucide-react';
+import { Check, Heart, Loader2, Plus, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { UnifiedMediaItem } from '@/core/types/media';
@@ -170,7 +170,18 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
         >
           {item.title}
         </h3>
-        <p className="text-md truncate font-medium text-zinc-400">{getSubtitle()}</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-md truncate font-medium text-zinc-400">{getSubtitle()}</p>
+          {item.rating != null && (
+            <div
+              className="flex shrink-0 items-center gap-1 text-sm font-medium text-zinc-300"
+              title={`Twoja ocena: ${item.rating}/5`}
+            >
+              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+              <span>{item.rating}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
