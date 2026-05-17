@@ -1,0 +1,34 @@
+name: Keep Supabase Alive
+
+# Uderza w Supabase REST API zeby zarejestrowac aktywnosc bazy i zapobiec
+# auto-pauzie free tier (7 dni inaktywnosci). Niezalezne od Vercela -
+# GitHub Actions chodzi nawet jak aplikacja nie ma ruchu.
+
+on:
+  schedule:
+    # Co niedziela i sroda 06:00 UTC (2x w tygodniu z marginesem do 7 dni)
+    - cron: '0 6 * * 0,3'
+  workflow_dispatch:  # rowniez manualne uruchamianie z zakladki Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          set -e
+          echo "Pinging $SUPABASE_URL ..."
+          status=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/MediaItem?select=id&limit=1")
+          echo "HTTP status: $status"
+          if [ "$status" != "200" ]; then
+            echo "::error::Supabase nie odpowiedzial poprawnie (HTTP $status)"
+            exit 1
+          fi
+          echo "Supabase odpowiada - aktywnosc bazy zarejestrowana"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
