@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { navItems } from '@/config/nav';
-import { ArrowRight, LayoutGrid, Sparkles } from 'lucide-react';
+import { ArrowRight, LayoutGrid } from 'lucide-react';
 
 import { mapDatabaseItemToUnified } from '@/core/mappers/media-mapper';
 
@@ -9,18 +9,15 @@ import { mediaRepository } from '@/lib/db/media-repository';
 import { cn } from '@/lib/utils';
 
 import { DashboardHeader } from '@/components/domain/dashboard-header';
-import { MediaCard } from '@/components/domain/media-card';
-import { MediaDetailsDialog } from '@/components/domain/media-details-dialog';
+import { RecentMediaSlider } from '@/components/domain/recent-media-slider';
 import { Separator } from '@/components/ui/separator';
-
-// Potrzebne do warunkowych klas
 
 export default async function Dashboard() {
   const dbItems = await mediaRepository.getAll();
   const items = dbItems.map(mapDatabaseItemToUnified);
 
-  // ZMIANA 1: Pobieramy 6 elementów, żeby móc zrobić układ 3+3 na średnich ekranach
-  const latestItems = items.slice(0, 6);
+  // Slider pokazuje 5 na raz, ale trzymamy do 20 ostatnich do podgladu wstecz.
+  const latestItems = items.slice(0, 20);
 
   const categories = navItems
     .flatMap((group) => group.items)
@@ -34,40 +31,7 @@ export default async function Dashboard() {
         icon={<LayoutGrid className="h-8 w-8" />}
       />
 
-      {items.length > 0 && (
-        <section className="space-y-6">
-          <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
-            <Sparkles className="h-4 w-4 text-emerald-500" />
-            Ostatnio dodane
-          </div>
-
-          {/* ZMIANA 2: Responsywny Grid 
-             - Mobile: 1 kolumna
-             - SM: 2 kolumny (dla 6 elementów -> 3 rzędy)
-             - LG: 3 kolumny (dla 6 elementów -> 2 rzędy)
-             - XL: 5 kolumn (dla 5 elementów -> 1 rząd)
-          */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {latestItems.map((item, index) => {
-              // ZMIANA 3: Ukrywanie 6-tego elementu na Mobile i XL
-              // - hidden sm:block -> ukryty na mobile, widoczny od SM w górę
-              // - xl:hidden -> ukryty ponownie na XL (bo tam chcemy tylko 5)
-              const isSixthItem = index === 5;
-
-              return (
-                <div
-                  key={item.externalId}
-                  className={cn(isSixthItem && 'hidden sm:block xl:hidden')}
-                >
-                  <MediaDetailsDialog item={item}>
-                    <MediaCard item={item} isAdded={true} />
-                  </MediaDetailsDialog>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      {items.length > 0 && <RecentMediaSlider items={latestItems} />}
 
       {/* DIVIDER */}
       <Separator className="bg-zinc-800" />
