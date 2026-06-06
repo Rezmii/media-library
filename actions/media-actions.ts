@@ -22,6 +22,8 @@ function revalidatePaths() {
   revalidatePath('/series');
   revalidatePath('/books');
   revalidatePath('/music');
+  revalidatePath('/favorites');
+  revalidatePath('/stats');
 }
 
 // Klucz: `${type}:${externalId}`. Compound key bo TMDB ma osobne przestrzenie ID
