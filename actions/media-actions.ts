@@ -214,9 +214,9 @@ export async function addToLibraryAction(item: UnifiedMediaItem) {
 
 export async function updateStatusAction(id: string, status: Status) {
   try {
-    const newDate = status === 'COMPLETED' ? new Date() : undefined;
-
-    await mediaRepository.updateStatus(id, status, newDate);
+    // Data ukonczenia (completedAt) jest ustawiana/czyszczona w repo na
+    // podstawie statusu. createdAt zostaje nietkniete.
+    await mediaRepository.updateStatus(id, status);
 
     revalidatePaths();
 

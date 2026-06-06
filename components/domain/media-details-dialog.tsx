@@ -16,6 +16,7 @@ import {
   BookOpen,
   Building2,
   Calendar,
+  CalendarCheck,
   CalendarPlus,
   Check,
   Clapperboard,
@@ -74,6 +75,10 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
 
   const [details, setDetails] = useState<UnifiedMediaDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  // Toggle daty w naglowku: domyslnie data ukonczenia (jesli jest), po kliknieciu
+  // data dodania. Reset przy kazdym otwarciu modala.
+  const [showAddedDate, setShowAddedDate] = useState(false);
 
   const [completedSeasons, setCompletedSeasons] = useState<number[]>(
     (item.metadata?.completedSeasons as number[]) || []
@@ -315,15 +320,42 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                     </span>
                   )}
 
-                  {item.isAdded && item.addedAt && (
-                    <span
-                      className="flex items-center gap-2 rounded-md border border-emerald-900/30 bg-emerald-950/30 px-3 py-1 text-emerald-200/80"
-                      title="Data dodania do biblioteki"
-                    >
-                      <CalendarPlus className="h-4 w-4 text-emerald-500" />
-                      {item.addedAt}
-                    </span>
-                  )}
+                  {item.isAdded &&
+                    (item.completedAt || item.addedAt) &&
+                    (() => {
+                      const hasBoth = !!item.completedAt && !!item.addedAt;
+                      // Domyslnie data ukonczenia; po kliknieciu data dodania.
+                      const showCompleted = !!item.completedAt && !showAddedDate;
+                      const label = showCompleted ? 'Ukończono' : 'Dodano';
+                      const value = showCompleted ? item.completedAt : item.addedAt;
+                      const Icon = showCompleted ? CalendarCheck : CalendarPlus;
+
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (hasBoth) setShowAddedDate((v) => !v);
+                          }}
+                          title={
+                            hasBoth
+                              ? 'Kliknij, aby przełączyć datę dodania / ukończenia'
+                              : `Data ${showCompleted ? 'ukończenia' : 'dodania'}`
+                          }
+                          className={cn(
+                            'flex items-center gap-2 rounded-md border border-emerald-900/30 bg-emerald-950/30 px-3 py-1 text-emerald-200/80 transition-colors',
+                            hasBoth &&
+                              'cursor-pointer hover:border-emerald-700/50 hover:bg-emerald-900/30'
+                          )}
+                        >
+                          <Icon className="h-4 w-4 text-emerald-500" />
+                          <span className="text-xs font-semibold tracking-wider uppercase opacity-70">
+                            {label}:
+                          </span>
+                          {value}
+                        </button>
+                      );
+                    })()}
                   {item.metadata.tmdbRating && (
                     <span className="flex items-center gap-2 rounded-md border border-yellow-500/20 bg-yellow-500/10 px-3 py-1 font-bold text-yellow-500">
                       {item.metadata.tmdbRating}

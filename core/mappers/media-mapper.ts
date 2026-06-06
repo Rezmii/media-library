@@ -23,6 +23,13 @@ export function mapDatabaseItemToUnified(dbItem: DbMediaItem): UnifiedMediaItem 
       month: '2-digit',
       year: 'numeric',
     }),
+    completedAt: dbItem.completedAt
+      ? dbItem.completedAt.toLocaleDateString('pl-PL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
+      : null,
     isAdded: true,
     isFavorite: dbItem.isFavorite,
     tags: dbItem.tags?.map((tag) => tag.name) || [],

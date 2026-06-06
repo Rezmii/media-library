@@ -29,8 +29,9 @@ enum Status {
 
 model MediaItem {
   id          String    @id @default(uuid())
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime  @default(now())  // Data dodania do biblioteki
   updatedAt   DateTime  @updatedAt
+  completedAt DateTime?                  // Data ukończenia (ustawiana przy przejściu na COMPLETED)
 
   type        MediaType
   status      Status    @default(BACKLOG)
