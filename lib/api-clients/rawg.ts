@@ -110,12 +110,13 @@ export const rawgClient = {
     }
   },
 
-  // Pobiera szczegoly gry: publisher (pierwszy z listy) i do 4 screenshotow.
-  // Dwa zapytania rownolegle: /games/{id} i /games/{id}/screenshots.
+  // Pobiera szczegoly gry: publisher, opis i do 4 screenshotow.
+  // RAWG endpoint /games?search nie zwraca opisu - tylko /games/{id} ma
+  // description_raw (plain text, bez HTML). Dwa zapytania rownolegle.
   getDetails: async (
     gameId: string
-  ): Promise<{ publisher: string | null; screenshots: string[] }> => {
-    if (!API_KEY) return { publisher: null, screenshots: [] };
+  ): Promise<{ publisher: string | null; description: string | null; screenshots: string[] }> => {
+    if (!API_KEY) return { publisher: null, description: null, screenshots: [] };
 
     try {
       const [gameRes, screenshotsRes] = await Promise.all([
@@ -124,11 +125,16 @@ export const rawgClient = {
       ]);
 
       let publisher: string | null = null;
+      let description: string | null = null;
       let screenshots: string[] = [];
 
       if (gameRes.ok) {
-        const gameData: { publishers?: { name: string }[] } = await gameRes.json();
+        const gameData: {
+          publishers?: { name: string }[];
+          description_raw?: string;
+        } = await gameRes.json();
         publisher = gameData.publishers?.[0]?.name || null;
+        description = gameData.description_raw?.trim() || null;
       }
 
       if (screenshotsRes.ok) {
@@ -136,10 +142,10 @@ export const rawgClient = {
         screenshots = (data.results || []).slice(0, 4).map((s) => s.image);
       }
 
-      return { publisher, screenshots };
+      return { publisher, description, screenshots };
     } catch (error) {
       console.error('Błąd RAWG getDetails:', error);
-      return { publisher: null, screenshots: [] };
+      return { publisher: null, description: null, screenshots: [] };
     }
   },
 };

@@ -141,7 +141,10 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
   };
 
   const description =
-    item.metadata?.overview || item.metadata?.description || 'Brak opisu dla tego elementu.';
+    item.metadata?.overview ||
+    item.metadata?.description ||
+    details?.description ||
+    'Brak opisu dla tego elementu.';
 
   const heroImage = item.metadata?.backdropUrl || item.coverUrl;
 

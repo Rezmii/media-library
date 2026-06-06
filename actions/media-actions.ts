@@ -326,6 +326,7 @@ export async function getMediaDetailsAction(
       details = {
         additions,
         publisher: gameDetails.publisher || undefined,
+        description: gameDetails.description || undefined,
         screenshots: gameDetails.screenshots,
       };
     }
