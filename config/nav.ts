@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   BookOpen,
   Disc,
   Film,
@@ -48,6 +49,11 @@ export const navItems = [
         title: 'Ulubione',
         href: '/favorites',
         icon: Heart,
+      },
+      {
+        title: 'Statystyki',
+        href: '/stats',
+        icon: BarChart3,
       },
     ],
   },

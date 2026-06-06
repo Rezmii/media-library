@@ -21,7 +21,9 @@ export default async function Dashboard() {
 
   const categories = navItems
     .flatMap((group) => group.items)
-    .filter((item) => item.href !== '/' && item.href !== '/settings');
+    .filter(
+      (item) => item.href !== '/' && item.href !== '/settings' && item.href !== '/stats'
+    );
 
   return (
     <div className="animate-in fade-in space-y-12 duration-500">
