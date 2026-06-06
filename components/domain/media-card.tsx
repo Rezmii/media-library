@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { toggleFavoriteAction } from '@/actions/media-actions';
-import { Check, Heart, Loader2, Plus, Star } from 'lucide-react';
+import { Check, Clock, Heart, Loader2, Plus, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { UnifiedMediaItem } from '@/core/types/media';
@@ -127,6 +127,14 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
             Brak zdjęcia
           </div>
         )}
+        {/* Badge szacowanego czasu gry (RAWG playtime). Widoczny domyslnie,
+            chowa sie na hover, zeby ustapic przyciskowi usuwania w tym rogu. */}
+        {item.type === 'GAME' && Number(item.metadata?.playtime) > 0 && (
+          <div className="absolute right-2 bottom-2 z-10 flex items-center gap-1 rounded-full border border-white/10 bg-black/70 px-2 py-1 text-xs font-medium text-zinc-200 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-0">
+            <Clock className="h-3 w-3 text-zinc-400" />~{item.metadata.playtime}h
+          </div>
+        )}
+
         {!item.status && (
           <div
             className={cn(
