@@ -123,7 +123,10 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
         setIsLoadingDetails(true);
         const cleanId = item.isAdded ? item.metadata?.externalId : item.externalId;
         if (cleanId) {
-          const res = await getMediaDetailsAction(cleanId, item.type);
+          const res = await getMediaDetailsAction(cleanId, item.type, {
+            title: item.title,
+            artist: item.metadata?.artist,
+          });
           if (res.success && res.data) {
             setDetails(res.data);
           }
