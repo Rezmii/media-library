@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { updateMediaDetailsAction } from '@/actions/media-actions';
-import { getMediaDetailsAction } from '@/actions/media-actions';
-import { updateCompletedSeasonsAction, updateStatusAction } from '@/actions/media-actions';
+import {
+  addToLibraryAction,
+  getMediaDetailsAction,
+  updateCompletedSeasonsAction,
+  updateMediaDetailsAction,
+  updateStatusAction,
+} from '@/actions/media-actions';
 import {
   AlignLeft,
   BookOpen,
@@ -167,11 +171,25 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
   };
 
   const handleAddFromModal = async () => {
-    if (onAdd) {
-      setIsSaving(true);
-      onAdd(item);
-      setIsSaving(false);
+    setIsSaving(true);
+    try {
+      if (onAdd) {
+        onAdd(item);
+      } else {
+        // Fallback: brak handlera od rodzica (np. nested dialog dla DLC z poziomu
+        // gry). Wolamy bezposrednio server action — revalidatePaths odswiezy
+        // biblioteke.
+        const result = await addToLibraryAction(item);
+        if (result.success) {
+          toast.success('Dodano do biblioteki', { description: item.title });
+        } else {
+          toast.error('Nie udało się dodać', { description: result.error });
+          return;
+        }
+      }
       setOpen(false);
+    } finally {
+      setIsSaving(false);
     }
   };
 
