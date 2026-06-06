@@ -100,13 +100,6 @@ export const mediaRepository = {
     });
   },
 
-  updateCoverUrl: async (id: string, coverUrl: string) => {
-    return db.mediaItem.update({
-      where: { id },
-      data: { coverUrl },
-    });
-  },
-
   addTag: async (mediaId: string, tagName: string) => {
     return db.mediaItem.update({
       where: { id: mediaId },
