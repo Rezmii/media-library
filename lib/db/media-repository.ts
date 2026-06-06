@@ -37,7 +37,11 @@ export const mediaRepository = {
       include: {
         tags: true,
       },
-      orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
+      // Drugorzedny klucz to STABILNE `id` (UUID), nie `updatedAt`. Inaczej
+      // kazda edycja (ulubione, ocena, notatka) bumpuje @updatedAt i element
+      // przeskakuje w gore w grupie o tym samym createdAt. "Ukonczone idzie na
+      // przod" dziala oddzielnie przez nadpisanie createdAt w updateStatusAction.
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
   },
 
