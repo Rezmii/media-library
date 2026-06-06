@@ -13,7 +13,6 @@ import { openLibraryClient } from '@/lib/api-clients/open-library';
 import { rawgClient } from '@/lib/api-clients/rawg';
 import { spotifyClient } from '@/lib/api-clients/spotify';
 import { tmdbClient } from '@/lib/api-clients/tmdb';
-import { wikipediaClient } from '@/lib/api-clients/wikipedia';
 import { mediaRepository } from '@/lib/db/media-repository';
 
 function revalidatePaths() {
@@ -289,27 +288,17 @@ export async function deleteMediaAction(id: string) {
 
 export async function getMediaDetailsAction(
   externalId: string,
-  type: MediaType,
-  meta?: { title?: string; artist?: string }
+  type: MediaType
 ): Promise<{ success: boolean; data: UnifiedMediaDetails | null }> {
   try {
     let details: UnifiedMediaDetails | null = null;
 
     if (type === 'ALBUM') {
-      // Rownolegle: Spotify (tracki + gatunki) + Wikipedia (opis - Spotify
-      // nie ma description w API). Title i artist znamy z item w komponencie.
-      const [albumData, wikiDescription] = await Promise.all([
-        spotifyClient.getAlbumDetails(externalId),
-        meta?.title && meta?.artist
-          ? wikipediaClient.getAlbumDescription(meta.title, meta.artist)
-          : Promise.resolve(null),
-      ]);
-
+      const albumData = await spotifyClient.getAlbumDetails(externalId);
       if (albumData) {
         details = {
           genres: albumData.genres,
           tracks: albumData.tracks,
-          description: wikiDescription || undefined,
         };
       }
     }
