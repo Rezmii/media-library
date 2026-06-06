@@ -2,9 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { Check, ChevronDown, Filter, Heart, X } from 'lucide-react';
-
-// Dodano ChevronDown
+import { ArrowDownUp, Check, ChevronDown, Filter, Heart, X } from 'lucide-react';
 
 import { UnifiedMediaItem } from '@/core/types/media';
 
@@ -21,8 +19,42 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+
+// --- Statusy i sortowanie ---
+
+export type StatusValue = 'BACKLOG' | 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
+export type SortKey = 'date' | 'rating' | 'title' | 'year' | 'length' | 'random';
+export type SortDir = 'asc' | 'desc';
+
+export const STATUS_OPTIONS: { value: StatusValue; label: string; active: string }[] = [
+  { value: 'IN_PROGRESS', label: 'W trakcie', active: 'border-blue-500/50 bg-blue-950/30 text-blue-300' },
+  {
+    value: 'COMPLETED',
+    label: 'Ukończone',
+    active: 'border-emerald-500/50 bg-emerald-950/30 text-emerald-300',
+  },
+  { value: 'ABANDONED', label: 'Porzucone', active: 'border-red-500/50 bg-red-950/30 text-red-300' },
+];
+
+export const SORT_LABELS: Record<SortKey, string> = {
+  date: 'Data',
+  rating: 'Ocena',
+  title: 'Tytuł',
+  year: 'Rok premiery',
+  length: 'Długość',
+  random: 'Losowo',
+};
 
 // ... (funkcja getTagCategory pozostaje bez zmian)
 function getTagCategory(tag: string): string {
@@ -161,6 +193,13 @@ interface MediaFilterBarProps {
   onTagsChange: (tags: string[]) => void;
   showFavoritesOnly: boolean;
   onFavoritesChange: (show: boolean) => void;
+  selectedStatuses: StatusValue[];
+  onStatusesChange: (statuses: StatusValue[]) => void;
+  sortKey: SortKey;
+  onSortKeyChange: (key: SortKey) => void;
+  sortDir: SortDir;
+  onSortDirChange: (dir: SortDir) => void;
+  lengthSortAvailable: boolean;
 }
 
 export function MediaFilterBar({
@@ -169,6 +208,13 @@ export function MediaFilterBar({
   onTagsChange,
   showFavoritesOnly,
   onFavoritesChange,
+  selectedStatuses,
+  onStatusesChange,
+  sortKey,
+  onSortKeyChange,
+  sortDir,
+  onSortDirChange,
+  lengthSortAvailable,
 }: MediaFilterBarProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState(''); // Stan wyszukiwarki tagów
@@ -298,6 +344,14 @@ export function MediaFilterBar({
     setExpandedCategories((prev) =>
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     );
+  };
+
+  const toggleStatus = (status: StatusValue) => {
+    if (selectedStatuses.includes(status)) {
+      onStatusesChange(selectedStatuses.filter((s) => s !== status));
+    } else {
+      onStatusesChange([...selectedStatuses, status]);
+    }
   };
 
   return (
@@ -434,6 +488,68 @@ export function MediaFilterBar({
           <Heart className={cn('mr-2 h-4 w-4', showFavoritesOnly && 'fill-current')} />
           Ulubione
         </Button>
+
+        <Separator orientation="vertical" className="mx-1 hidden h-6 bg-zinc-800 sm:block" />
+
+        {/* Pigułki statusu (multi-select, filtr OR) */}
+        {STATUS_OPTIONS.map((s) => {
+          const active = selectedStatuses.includes(s.value);
+          return (
+            <Button
+              key={s.value}
+              variant="outline"
+              size="sm"
+              onClick={() => toggleStatus(s.value)}
+              className={cn(
+                'h-9 border-dashed transition-all',
+                active
+                  ? s.active
+                  : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+              )}
+            >
+              {s.label}
+            </Button>
+          );
+        })}
+
+        {/* Dropdown sortowania */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-auto h-9 border-dashed border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+            >
+              <ArrowDownUp className="mr-2 h-4 w-4" />
+              Sortuj: {SORT_LABELS[sortKey]}
+              <span className="ml-1 text-zinc-500">{sortDir === 'desc' ? '↓' : '↑'}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 border-zinc-800 bg-zinc-950 text-zinc-200">
+            <DropdownMenuLabel className="text-zinc-400">Sortuj według</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={sortKey}
+              onValueChange={(v) => onSortKeyChange(v as SortKey)}
+            >
+              <DropdownMenuRadioItem value="date">Data</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="rating">Ocena</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="title">Tytuł</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="year">Rok premiery</DropdownMenuRadioItem>
+              {lengthSortAvailable && (
+                <DropdownMenuRadioItem value="length">Długość (gry)</DropdownMenuRadioItem>
+              )}
+              <DropdownMenuRadioItem value="random">Losowo</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator className="bg-zinc-800" />
+            <DropdownMenuRadioGroup
+              value={sortDir}
+              onValueChange={(v) => onSortDirChange(v as SortDir)}
+            >
+              <DropdownMenuRadioItem value="desc">Malejąco</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="asc">Rosnąco</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {selectedTags.length > 0 && (

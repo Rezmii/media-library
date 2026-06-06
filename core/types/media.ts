@@ -8,6 +8,7 @@ export interface UnifiedMediaItem {
   releaseDate?: string;
   addedAt?: string;
   completedAt?: string | null;
+  activityTs?: number;
   metadata: Record<string, any>;
   isAdded?: boolean;
   isFavorite?: boolean;

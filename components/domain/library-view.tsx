@@ -15,46 +15,71 @@ import { Button } from '@/components/ui/button';
 import { DashboardHeader } from './dashboard-header';
 import { LocalSearchBar } from './local-search-bar';
 import { MediaDetailsDialog } from './media-details-dialog';
-import { MediaFilterBar } from './media-filter-bar';
+import {
+  MediaFilterBar,
+  type SortDir,
+  type SortKey,
+  type StatusValue,
+} from './media-filter-bar';
 
 interface LibraryViewProps {
   title: string;
   items: UnifiedMediaItem[];
   icon?: React.ReactNode;
+  initialSortKey?: SortKey;
 }
 
-export function LibraryView({ title, items, icon }: LibraryViewProps) {
+export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatuses, setSelectedStatuses] = useState<StatusValue[]>([]);
+  const [sortKey, setSortKey] = useState<SortKey>(initialSortKey ?? 'date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
+  // Stabilna kolejnosc losowa dla sortu "Losowo" / widoku ulubionych. Liczona
+  // w useEffect (po mount), zeby nie bylo rozjazdu hydratacji SSR vs klient.
   const [randomOrder, setRandomOrder] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const orderMap: Record<string, number> = {};
+    const map: Record<string, number> = {};
     items.forEach((item) => {
-      orderMap[item.externalId] = Math.random();
+      map[item.externalId] = Math.random();
     });
-    setRandomOrder(orderMap);
+    setRandomOrder(map);
   }, [items]);
+
+  // Wlaczenie "Ulubione" automatycznie przelacza sort na losowy (jak dawniej);
+  // wylaczenie wraca do daty.
+  const handleFavoritesChange = (show: boolean) => {
+    setShowFavoritesOnly(show);
+    setSortKey(show ? 'random' : 'date');
+  };
+
+  // Opcja sortu "Długość" ma sens tylko gdy w widoku są gry z playtime.
+  const lengthSortAvailable = useMemo(
+    () => items.some((i) => typeof i.metadata?.playtime === 'number' && i.metadata.playtime > 0),
+    [items]
+  );
 
   const filteredItems = useMemo(() => {
     let result = [...items];
 
     if (showFavoritesOnly) {
       result = result.filter((item) => item.isFavorite);
+    }
 
-      result.sort((a, b) => {
-        const valA = randomOrder[a.externalId] ?? 0;
-        const valB = randomOrder[b.externalId] ?? 0;
-        return valA - valB;
-      });
+    if (selectedStatuses.length > 0) {
+      result = result.filter(
+        (item) => item.status && selectedStatuses.includes(item.status as StatusValue)
+      );
     }
 
     if (selectedTags.length > 0) {
       result = result.filter((item) => selectedTags.every((tag) => item.tags.includes(tag)));
     }
 
+    // Wyszukiwanie ma wlasna kolejnosc trafnosci (Fuse) — wtedy nie sortujemy.
     if (searchQuery.trim() !== '') {
       const fuse = new Fuse(result, {
         keys: [
@@ -74,11 +99,53 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
         ignoreLocation: true,
       });
 
-      result = fuse.search(searchQuery).map((res) => res.item);
+      return fuse.search(searchQuery).map((res) => res.item);
     }
 
+    // Sort losowy: stabilny w obrebie sesji (randomOrder), kierunek bez znaczenia.
+    if (sortKey === 'random') {
+      result.sort(
+        (a, b) => (randomOrder[a.externalId] ?? 0) - (randomOrder[b.externalId] ?? 0)
+      );
+      return result;
+    }
+
+    // Sortowanie (porownanie w sensie rosnacym, kierunek aplikowany na koncu).
+    const primary = (a: UnifiedMediaItem, b: UnifiedMediaItem) => {
+      switch (sortKey) {
+        case 'rating':
+          return (a.rating ?? -1) - (b.rating ?? -1);
+        case 'title':
+          return a.title.localeCompare(b.title, 'pl');
+        case 'year':
+          return (parseInt(a.releaseDate ?? '', 10) || 0) - (parseInt(b.releaseDate ?? '', 10) || 0);
+        case 'length':
+          return (Number(a.metadata?.playtime) || 0) - (Number(b.metadata?.playtime) || 0);
+        case 'date':
+        default:
+          return (a.activityTs ?? 0) - (b.activityTs ?? 0);
+      }
+    };
+
+    result.sort((a, b) => {
+      let r = primary(a, b);
+      r = sortDir === 'desc' ? -r : r;
+      if (r !== 0) return r;
+      // Stabilny tiebreak (niezalezny od kierunku).
+      return a.externalId < b.externalId ? -1 : a.externalId > b.externalId ? 1 : 0;
+    });
+
     return result;
-  }, [items, selectedTags, showFavoritesOnly, searchQuery, randomOrder]);
+  }, [
+    items,
+    selectedTags,
+    showFavoritesOnly,
+    searchQuery,
+    selectedStatuses,
+    sortKey,
+    sortDir,
+    randomOrder,
+  ]);
 
   return (
     <div className="animate-in fade-in space-y-8 duration-500">
@@ -92,7 +159,14 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
             selectedTags={selectedTags}
             onTagsChange={setSelectedTags}
             showFavoritesOnly={showFavoritesOnly}
-            onFavoritesChange={setShowFavoritesOnly}
+            onFavoritesChange={handleFavoritesChange}
+            selectedStatuses={selectedStatuses}
+            onStatusesChange={setSelectedStatuses}
+            sortKey={sortKey}
+            onSortKeyChange={setSortKey}
+            sortDir={sortDir}
+            onSortDirChange={setSortDir}
+            lengthSortAvailable={lengthSortAvailable}
           />
 
           <div className="w-full shrink-0 lg:w-72">
@@ -121,6 +195,7 @@ export function LibraryView({ title, items, icon }: LibraryViewProps) {
                 setSelectedTags([]);
                 setShowFavoritesOnly(false);
                 setSearchQuery('');
+                setSelectedStatuses([]);
               }}
             >
               Wyczyść filtry

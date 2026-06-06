@@ -30,6 +30,9 @@ export function mapDatabaseItemToUnified(dbItem: DbMediaItem): UnifiedMediaItem 
           year: 'numeric',
         })
       : null,
+    // Sortowalna "data aktywnosci" = max(dodanie, ukonczenie). Spojne z sortem
+    // w repozytorium (GREATEST(createdAt, completedAt)).
+    activityTs: Math.max(dbItem.createdAt.getTime(), dbItem.completedAt?.getTime() ?? 0),
     isAdded: true,
     isFavorite: dbItem.isFavorite,
     tags: dbItem.tags?.map((tag) => tag.name) || [],
