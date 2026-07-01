@@ -8,6 +8,8 @@ import { toggleFavoriteAction } from '@/actions/media-actions';
 import { Check, Clock, Heart, Loader2, Plus, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { flagsForType } from '@/config/flags';
+
 import { UnifiedMediaItem } from '@/core/types/media';
 
 import { cn } from '@/lib/utils';
@@ -15,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 import { DeleteMediaButton } from './delete-media-button';
+import { FlagControl } from './flag-control';
 import { MediaBadge } from './media-badge';
 import { StatusSelector } from './status-selector';
 
@@ -165,7 +168,19 @@ export function MediaCard({ item, onAdd, isAdded = false }: MediaCardProps) {
         {item.status ? (
           <>
             <div className="absolute top-2 right-2 left-2 z-10 flex items-start justify-between">
-              <MediaBadge type={item.type} />
+              <div className="flex items-center gap-1.5">
+                <MediaBadge type={item.type} />
+                {flagsForType(item.type).map((def) => (
+                  <FlagControl
+                    key={def.key}
+                    itemId={item.externalId}
+                    type={item.type}
+                    def={def}
+                    initialActive={item.metadata?.flags?.[def.key] === true}
+                    mode="icon"
+                  />
+                ))}
+              </div>
 
               <StatusSelector id={item.externalId} currentStatus={item.status} />
             </div>

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { ArrowDownUp, Check, ChevronDown, Filter, Heart, X } from 'lucide-react';
 
+import { MEDIA_FLAGS } from '@/config/flags';
+
 import { UnifiedMediaItem } from '@/core/types/media';
 
 import { cn } from '@/lib/utils';
@@ -200,6 +202,8 @@ interface MediaFilterBarProps {
   sortDir: SortDir;
   onSortDirChange: (dir: SortDir) => void;
   lengthSortAvailable: boolean;
+  flagFilters: Record<string, 'yes' | 'no'>;
+  onCycleFlagFilter: (key: string) => void;
 }
 
 export function MediaFilterBar({
@@ -215,6 +219,8 @@ export function MediaFilterBar({
   sortDir,
   onSortDirChange,
   lengthSortAvailable,
+  flagFilters,
+  onCycleFlagFilter,
 }: MediaFilterBarProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState(''); // Stan wyszukiwarki tagów
@@ -230,6 +236,12 @@ export function MediaFilterBar({
     const firstType = items[0].type;
     const allSame = items.every((item) => item.type === firstType);
     return allSame ? firstType : 'ALL';
+  }, [items]);
+
+  // Flagi mające zastosowanie do typów obecnych w widoku
+  const applicableFlags = useMemo(() => {
+    const types = new Set(items.map((i) => i.type));
+    return MEDIA_FLAGS.filter((f) => f.types.some((t) => types.has(t as UnifiedMediaItem['type'])));
   }, [items]);
 
   // Grupowanie tagów
@@ -508,6 +520,32 @@ export function MediaFilterBar({
               )}
             >
               {s.label}
+            </Button>
+          );
+        })}
+
+        {/* Filtry flag (tri-state: brak → z → bez) */}
+        {applicableFlags.map((f) => {
+          const state = flagFilters[f.key];
+          const Icon = f.icon;
+          return (
+            <Button
+              key={f.key}
+              variant="outline"
+              size="sm"
+              onClick={() => onCycleFlagFilter(f.key)}
+              title={f.description}
+              className={cn(
+                'h-9 border-dashed transition-all',
+                state === 'yes'
+                  ? 'border-emerald-500/50 bg-emerald-950/30 text-emerald-300'
+                  : state === 'no'
+                    ? 'border-red-500/50 bg-red-950/30 text-red-300'
+                    : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+              )}
+            >
+              <Icon className="mr-2 h-4 w-4" />
+              {state === 'no' ? f.labelNeg : f.label}
             </Button>
           );
         })}

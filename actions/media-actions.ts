@@ -363,3 +363,14 @@ export async function updateCompletedSeasonsAction(id: string, completedSeasons:
     return { success: false };
   }
 }
+
+export async function toggleFlagAction(id: string, flagKey: string, value: boolean) {
+  try {
+    await mediaRepository.updateFlag(id, flagKey, value);
+    revalidatePaths();
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd zapisu flagi:', error);
+    return { success: false };
+  }
+}

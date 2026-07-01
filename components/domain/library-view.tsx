@@ -36,6 +36,18 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
   const [selectedStatuses, setSelectedStatuses] = useState<StatusValue[]>([]);
   const [sortKey, setSortKey] = useState<SortKey>(initialSortKey ?? 'date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [flagFilters, setFlagFilters] = useState<Record<string, 'yes' | 'no'>>({});
+
+  // Cykl filtra flagi: brak → 'yes' (z) → 'no' (bez) → brak
+  const cycleFlagFilter = (key: string) => {
+    setFlagFilters((prev) => {
+      const next = { ...prev };
+      if (prev[key] === undefined) next[key] = 'yes';
+      else if (prev[key] === 'yes') next[key] = 'no';
+      else delete next[key];
+      return next;
+    });
+  };
 
   // Stabilna kolejnosc losowa dla sortu "Losowo" / widoku ulubionych. Liczona
   // w useEffect (po mount), zeby nie bylo rozjazdu hydratacji SSR vs klient.
@@ -73,6 +85,17 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
       result = result.filter(
         (item) => item.status && selectedStatuses.includes(item.status as StatusValue)
       );
+    }
+
+    const flagEntries = Object.entries(flagFilters);
+    if (flagEntries.length > 0) {
+      result = result.filter((item) => {
+        const flags = (item.metadata?.flags as Record<string, boolean>) || {};
+        return flagEntries.every(([key, state]) => {
+          const has = flags[key] === true;
+          return state === 'yes' ? has : !has;
+        });
+      });
     }
 
     if (selectedTags.length > 0) {
@@ -145,6 +168,7 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
     sortKey,
     sortDir,
     randomOrder,
+    flagFilters,
   ]);
 
   return (
@@ -167,6 +191,8 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
             sortDir={sortDir}
             onSortDirChange={setSortDir}
             lengthSortAvailable={lengthSortAvailable}
+            flagFilters={flagFilters}
+            onCycleFlagFilter={cycleFlagFilter}
           />
 
           <div className="w-full shrink-0 lg:w-72">
@@ -196,6 +222,7 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
                 setShowFavoritesOnly(false);
                 setSearchQuery('');
                 setSelectedStatuses([]);
+                setFlagFilters({});
               }}
             >
               Wyczyść filtry

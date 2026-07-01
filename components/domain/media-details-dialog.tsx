@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { flagsForType } from '@/config/flags';
+
 import { UnifiedMediaDetails, UnifiedMediaItem } from '@/core/types/media';
 
 import { cn } from '@/lib/utils';
@@ -49,6 +51,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 import { DeleteMediaButton } from './delete-media-button';
+import { FlagControl } from './flag-control';
 import { MediaBadge } from './media-badge';
 import { StarRating } from './star-rating';
 import { StatusSelector } from './status-selector';
@@ -425,6 +428,23 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
                   </span>
                 </div>
               </div>
+
+              {/* Niestandardowe kategorie (flagi) — klik przelacza */}
+              {item.isAdded && flagsForType(item.type).length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {flagsForType(item.type).map((def) => (
+                    <FlagControl
+                      key={def.key}
+                      itemId={item.externalId}
+                      type={item.type}
+                      def={def}
+                      initialActive={(item.metadata?.flags as Record<string, boolean>)?.[def.key] === true}
+                      mode="chip"
+                    />
+                  ))}
+                </div>
+              )}
+
               {item.type === 'ALBUM' && (
                 <div className="mt-6 space-y-4">
                   {/* Link do Spotify */}

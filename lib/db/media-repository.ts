@@ -150,4 +150,25 @@ export const mediaRepository = {
       data: { metadata },
     });
   },
+
+  // Niestandardowe flagi trzymane w metadata.flags. value=true ustawia,
+  // value=false usuwa klucz (brak = wylaczona).
+  updateFlag: async (id: string, flagKey: string, value: boolean) => {
+    const item = await db.mediaItem.findUnique({ where: { id } });
+    if (!item) return;
+
+    const metadata = (item.metadata as Record<string, any>) || {};
+    const flags = { ...(metadata.flags || {}) };
+    if (value) {
+      flags[flagKey] = true;
+    } else {
+      delete flags[flagKey];
+    }
+    metadata.flags = flags;
+
+    return db.mediaItem.update({
+      where: { id },
+      data: { metadata },
+    });
+  },
 };
