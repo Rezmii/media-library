@@ -1,34 +1,39 @@
 name: Keep Supabase Alive
 
-# Uderza w Supabase REST API zeby zarejestrowac aktywnosc bazy i zapobiec
-# auto-pauzie free tier (7 dni inaktywnosci). Niezalezne od Vercela -
-# GitHub Actions chodzi nawet jak aplikacja nie ma ruchu.
+# Utrzymuje projekt Supabase (free tier) przy zyciu wykonujac REALNE zapytanie
+# SQL przez bezposrednie polaczenie Postgres (psql). To ten sam rodzaj
+# aktywnosci co normalne uzycie aplikacji (Prisma -> Supavisor -> Postgres),
+# wiec resetuje 7-dniowy licznik auto-pauzy.
+#
+# Dlaczego nie REST (/rest/v1) jak wczesniej: przy RLS deny-all anon SELECT
+# zwracal pusto i najwyrazniej NIE liczyl sie jako aktywnosc bazy. Bezposrednie
+# zapytanie SQL (jako rola postgres) omija PostgREST i RLS - liczy sie zawsze.
+#
+# Codziennie + ponowienia: pojedynczy nieudany/pominiety run (GitHub bywa
+# opozniony) zostawia 6 dni marginesu do progu pauzy, zamiast luki 7 dni.
 
 on:
   schedule:
-    # Co niedziela i sroda 06:00 UTC (2x w tygodniu z marginesem do 7 dni)
-    - cron: '0 6 * * 0,3'
-  workflow_dispatch:  # rowniez manualne uruchamianie z zakladki Actions
+    - cron: '23 8 * * *' # codziennie 08:23 UTC
+  workflow_dispatch: # mozliwosc recznego uruchomienia z zakladki Actions
 
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     steps:
-      - name: Ping Supabase REST API
-        run: |
-          set -e
-          echo "Pinging $SUPABASE_URL ..."
-          status=$(curl -sS -o /dev/null -w "%{http_code}" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/MediaItem?select=id&limit=1")
-          echo "HTTP status: $status"
-          if [ "$status" != "200" ]; then
-            echo "::error::Supabase nie odpowiedzial poprawnie (HTTP $status)"
-            exit 1
-          fi
-          echo "Supabase odpowiada - aktywnosc bazy zarejestrowana"
+      - name: Realne zapytanie do bazy (z ponowieniami)
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          for attempt in 1 2 3 4 5; do
+            echo "Proba $attempt: SELECT do bazy..."
+            if psql "$DB_URL" -tAc 'select count(*) from "MediaItem";'; then
+              echo "OK - aktywnosc bazy zarejestrowana (reset licznika pauzy)."
+              exit 0
+            fi
+            echo "Nieudana proba $attempt. Ponawiam za 30s..."
+            sleep 30
+          done
+          echo "::error::Nie udalo sie odpytac bazy po 5 probach."
+          exit 1
