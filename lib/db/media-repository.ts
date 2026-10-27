@@ -2,7 +2,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { MediaType, Prisma, PrismaClient, Status } from '@prisma/client';
 
-import { activityTimestamp } from '@/core/activity';
+import { sortTimestamp } from '@/core/activity';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -41,17 +41,14 @@ export const mediaRepository = {
       },
     });
 
-    // Sortowanie po "dacie aktywnosci" = max(createdAt, completedAt, lastProgressAt)
-    // malejaco (patrz core/activity.ts).
-    // - Ukonczenie ustawia completedAt=now() -> element wskakuje na gore.
-    // - Zaznaczenie nowego obejrzanego sezonu ustawia metadata.lastProgressAt.
-    // - Edycje (ulubione/ocena/notatka) NIE ruszaja zadnej z tych dat -> brak
-    //   przeskokow.
-    // - max() gwarantuje, ze element nigdy nie zatonie ponizej swojej daty
-    //   dodania (chroni recznie ustawiona kolejnosc starych pozycji).
-    // Drugorzedny klucz: stabilne id (UUID).
+    // Sortowanie malejaco po sortTimestamp (patrz core/activity.ts):
+    // - recznie przeciagnieta pozycja -> orderAt,
+    // - w przeciwnym razie max(createdAt, completedAt, lastProgressAt).
+    // Ukonczenie / nowy sezon czyszcza orderAt, wiec i tak wypychaja na gore.
+    // Edycje (ulubione/ocena/notatka) nie ruszaja zadnej z tych dat.
+    // Drugorzedny klucz: stabilne id (UUID), malejaco.
     return items.sort((a, b) => {
-      const diff = activityTimestamp(b) - activityTimestamp(a);
+      const diff = sortTimestamp(b) - sortTimestamp(a);
       if (diff !== 0) return diff;
       return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
     });
@@ -78,17 +75,31 @@ export const mediaRepository = {
     });
   },
 
-  // Zmiana statusu. Przy przejsciu na COMPLETED ustawiamy completedAt=now()
-  // (element wskakuje na gore wg "daty aktywnosci"). Cofniecie statusu z
-  // COMPLETED czysci completedAt (null). createdAt NIE jest ruszany.
+  // Zmiana statusu. Przy przejsciu na COMPLETED ustawiamy completedAt=now() i
+  // czyscimy reczna pozycje (orderAt), wiec element wskakuje na gore. Cofniecie
+  // statusu z COMPLETED czysci completedAt. createdAt NIE jest ruszany.
   updateStatus: async (id: string, status: Status) => {
+    const completed = status === 'COMPLETED';
     return await db.mediaItem.update({
       where: { id },
       data: {
         status,
-        completedAt: status === 'COMPLETED' ? new Date() : null,
+        completedAt: completed ? new Date() : null,
+        ...(completed && { orderAt: null }),
       },
     });
+  },
+
+  // Reczna kolejnosc z przeciagania: zapis wielu znacznikow w jednej transakcji.
+  setOrderAt: async (updates: { id: string; orderAt: Date }[]) => {
+    return db.$transaction(
+      updates.map((u) =>
+        db.mediaItem.update({
+          where: { id: u.id },
+          data: { orderAt: u.orderAt },
+        })
+      )
+    );
   },
 
   updateDetails: async (id: string, data: { rating: number | null; note: string | null }) => {
@@ -150,15 +161,17 @@ export const mediaRepository = {
       : [];
 
     // Zaznaczenie NOWEGO sezonu = postep -> serial wskakuje na gore list
-    // (odznaczenie sezonu nie przesuwa pozycji).
-    if (markProgress && completedSeasons.some((n) => !previous.includes(n))) {
+    // (odznaczenie sezonu nie przesuwa pozycji). Postep czysci tez reczna
+    // pozycje z przeciagania.
+    const progressed = markProgress && completedSeasons.some((n) => !previous.includes(n));
+    if (progressed) {
       metadata.lastProgressAt = new Date().toISOString();
     }
     metadata.completedSeasons = completedSeasons;
 
     return db.mediaItem.update({
       where: { id },
-      data: { metadata },
+      data: { metadata, ...(progressed && { orderAt: null }) },
     });
   },
 

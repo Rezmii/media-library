@@ -5,12 +5,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Fuse from 'fuse.js';
 import { FolderOpen } from 'lucide-react';
+import { toast } from 'sonner';
 
+import type { OrderEntry } from '@/core/reorder';
 import { UnifiedMediaItem } from '@/core/types/media';
 
 import { MediaCard } from '@/components/domain/media-card';
 import { SearchDialog } from '@/components/domain/search-dialog';
 import { Button } from '@/components/ui/button';
+
+import { reorderMediaAction } from '@/actions/media-actions';
 
 import { DashboardHeader } from './dashboard-header';
 import { LocalSearchBar } from './local-search-bar';
@@ -21,6 +25,7 @@ import {
   type SortKey,
   type StatusValue,
 } from './media-filter-bar';
+import { SortableMediaGrid } from './sortable-media-grid';
 
 interface LibraryViewProps {
   title: string;
@@ -61,6 +66,52 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
     setRandomOrder(map);
   }, [items]);
 
+  // Optymistyczne pozycje po przeciagnieciu (id -> nowy activityTs), zanim
+  // serwer odda odswiezone dane. Trzymamy je razem z `items`, dla ktorych powstaly —
+  // nowe `items` z serwera automatycznie je uniewazniaja.
+  const [overrideState, setOverrideState] = useState<{
+    base: UnifiedMediaItem[];
+    map: Record<string, number>;
+  }>({ base: items, map: {} });
+  const orderOverrides = useMemo(
+    () => (overrideState.base === items ? overrideState.map : {}),
+    [overrideState, items]
+  );
+  const setOrderOverrides = (
+    update: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
+  ) =>
+    setOverrideState((prev) => {
+      const current = prev.base === items ? prev.map : {};
+      return { base: items, map: typeof update === 'function' ? update(current) : update };
+    });
+
+  const effectiveItems = useMemo(
+    () =>
+      Object.keys(orderOverrides).length === 0
+        ? items
+        : items.map((item) =>
+            item.externalId in orderOverrides
+              ? { ...item, activityTs: orderOverrides[item.externalId] }
+              : item
+          ),
+    [items, orderOverrides]
+  );
+
+  const handleReorder = async (updates: OrderEntry[]) => {
+    const previous = orderOverrides;
+    setOrderOverrides((prev) => {
+      const next = { ...prev };
+      updates.forEach((u) => (next[u.id] = u.ts));
+      return next;
+    });
+
+    const res = await reorderMediaAction(updates.map((u) => ({ id: u.id, orderAt: u.ts })));
+    if (!res.success) {
+      setOrderOverrides(previous);
+      toast.error('Nie udało się zapisać kolejności');
+    }
+  };
+
   // Wlaczenie "Ulubione" automatycznie przelacza sort na losowy (jak dawniej);
   // wylaczenie wraca do daty.
   const handleFavoritesChange = (show: boolean) => {
@@ -75,7 +126,7 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
   );
 
   const filteredItems = useMemo(() => {
-    let result = [...items];
+    let result = [...effectiveItems];
 
     if (showFavoritesOnly) {
       result = result.filter((item) => item.isFavorite);
@@ -154,13 +205,14 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
       let r = primary(a, b);
       r = sortDir === 'desc' ? -r : r;
       if (r !== 0) return r;
-      // Stabilny tiebreak (niezalezny od kierunku).
-      return a.externalId < b.externalId ? -1 : a.externalId > b.externalId ? 1 : 0;
+      // Stabilny tiebreak (niezalezny od kierunku), malejaco po id — jak w repozytorium,
+      // zeby kolejnosc remisow zgadzala sie z serwerem (wazne dla przeciagania).
+      return a.externalId < b.externalId ? 1 : a.externalId > b.externalId ? -1 : 0;
     });
 
     return result;
   }, [
-    items,
+    effectiveItems,
     selectedTags,
     showFavoritesOnly,
     searchQuery,
@@ -170,6 +222,18 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
     randomOrder,
     flagFilters,
   ]);
+
+  // Przeciaganie tylko w widoku osi czasu (Data, najnowsze najpierw) bez wyszukiwania —
+  // wtedy kolejnosc na ekranie = kolejnosc zapisywana. Filtry tagow/statusow nie
+  // przeszkadzaja: nowa pozycja liczy sie miedzy widocznymi sasiadami.
+  const sortableEnabled =
+    sortKey === 'date' &&
+    sortDir === 'desc' &&
+    searchQuery.trim() === '' &&
+    filteredItems.length > 1;
+
+  const gridClassName =
+    'grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5';
 
   return (
     <div className="animate-in fade-in space-y-8 duration-500">
@@ -209,6 +273,7 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
       <AnimatePresence mode="wait">
         {filteredItems.length === 0 && items.length > 0 ? (
           <motion.div
+            key="no-results"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -230,6 +295,7 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
           </motion.div>
         ) : items.length === 0 ? (
           <motion.div
+            key="empty"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-800/50 bg-zinc-900/20 py-24 text-center"
@@ -244,11 +310,21 @@ export function LibraryView({ title, items, icon, initialSortKey }: LibraryViewP
               </Button>
             </SearchDialog>
           </motion.div>
+        ) : sortableEnabled ? (
+          /* SIATKA Z PRZECIAGANIEM (dnd-kit sam animuje przesuwanie, bez framer `layout`) */
+          <motion.div key="sortable" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <SortableMediaGrid
+              items={filteredItems}
+              className={gridClassName}
+              onReorder={handleReorder}
+            />
+          </motion.div>
         ) : (
           /* SIATKA Z ANIMACJĄ LAYOUTU */
           <motion.div
+            key="grid"
             layout // To sprawia, że kafelki płynnie się przesuwają na nowe pozycje
-            className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+            className={gridClassName}
           >
             <AnimatePresence>
               {filteredItems.map((item) => (

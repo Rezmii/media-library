@@ -32,6 +32,7 @@ model MediaItem {
   createdAt   DateTime  @default(now())  // Data dodania do biblioteki
   updatedAt   DateTime  @updatedAt
   completedAt DateTime?                  // Data ukończenia (ustawiana przy przejściu na COMPLETED)
+  orderAt     DateTime?                  // Ręczna pozycja na osi (przeciąganie); czyszczona przy ukończeniu/postępie
 
   type        MediaType
   status      Status    @default(BACKLOG)

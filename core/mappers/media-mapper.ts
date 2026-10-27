@@ -1,6 +1,6 @@
 import { MediaItem, Tag } from '@prisma/client';
 
-import { activityTimestamp } from '@/core/activity';
+import { sortTimestamp } from '@/core/activity';
 import { UnifiedMediaItem } from '@/core/types/media';
 
 type DbMediaItem = MediaItem & { tags?: Tag[] };
@@ -33,7 +33,7 @@ export function mapDatabaseItemToUnified(dbItem: DbMediaItem): UnifiedMediaItem 
         })
       : null,
     // Sortowalna "data aktywnosci" — ta sama logika co sort w repozytorium.
-    activityTs: activityTimestamp(dbItem),
+    activityTs: sortTimestamp(dbItem),
     isAdded: true,
     isFavorite: dbItem.isFavorite,
     tags: dbItem.tags?.map((tag) => tag.name) || [],

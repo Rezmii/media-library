@@ -380,3 +380,27 @@ export async function toggleFlagAction(id: string, flagKey: string, value: boole
     return { success: false };
   }
 }
+
+// Reczna kolejnosc z przeciagania kart. Przyjmuje nowe znaczniki czasu (ms)
+// dla pozycji z okna zmiany (zwykle jednej, patrz core/reorder.ts).
+export async function reorderMediaAction(updates: { id: string; orderAt: number }[]) {
+  try {
+    if (!Array.isArray(updates) || updates.length === 0 || updates.length > 500) {
+      return { success: false };
+    }
+
+    const valid = updates.every(
+      (u) => typeof u.id === 'string' && u.id.length > 0 && Number.isFinite(u.orderAt)
+    );
+    if (!valid) return { success: false };
+
+    await mediaRepository.setOrderAt(
+      updates.map((u) => ({ id: u.id, orderAt: new Date(u.orderAt) }))
+    );
+    revalidatePaths();
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd zapisu kolejności:', error);
+    return { success: false };
+  }
+}
