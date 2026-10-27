@@ -2,6 +2,8 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { MediaType, Prisma, PrismaClient, Status } from '@prisma/client';
 
+import { activityTimestamp } from '@/core/activity';
+
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
 });
@@ -39,18 +41,17 @@ export const mediaRepository = {
       },
     });
 
-    // Sortowanie po "dacie aktywnosci" = GREATEST(createdAt, completedAt) malejaco.
+    // Sortowanie po "dacie aktywnosci" = max(createdAt, completedAt, lastProgressAt)
+    // malejaco (patrz core/activity.ts).
     // - Ukonczenie ustawia completedAt=now() -> element wskakuje na gore.
+    // - Zaznaczenie nowego obejrzanego sezonu ustawia metadata.lastProgressAt.
     // - Edycje (ulubione/ocena/notatka) NIE ruszaja zadnej z tych dat -> brak
     //   przeskokow.
-    // - GREATEST gwarantuje, ze element nigdy nie zatonie ponizej swojej daty
+    // - max() gwarantuje, ze element nigdy nie zatonie ponizej swojej daty
     //   dodania (chroni recznie ustawiona kolejnosc starych pozycji).
     // Drugorzedny klucz: stabilne id (UUID).
-    const activity = (item: (typeof items)[number]) =>
-      Math.max(item.createdAt.getTime(), item.completedAt?.getTime() ?? 0);
-
     return items.sort((a, b) => {
-      const diff = activity(b) - activity(a);
+      const diff = activityTimestamp(b) - activityTimestamp(a);
       if (diff !== 0) return diff;
       return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
     });
@@ -94,7 +95,8 @@ export const mediaRepository = {
     return db.mediaItem.update({
       where: { id },
       data: {
-        rating: data.rating,
+        // 0 = "brak oceny" (domyslna wartosc gwiazdek w modalu) -> zapisujemy null
+        rating: data.rating && data.rating > 0 ? data.rating : null,
         note: data.note,
       },
     });
@@ -138,11 +140,20 @@ export const mediaRepository = {
     });
   },
 
-  updateCompletedSeasons: async (id: string, completedSeasons: number[]) => {
+  updateCompletedSeasons: async (id: string, completedSeasons: number[], markProgress = true) => {
     const item = await db.mediaItem.findUnique({ where: { id } });
     if (!item) return;
 
     const metadata = (item.metadata as Record<string, any>) || {};
+    const previous: number[] = Array.isArray(metadata.completedSeasons)
+      ? metadata.completedSeasons
+      : [];
+
+    // Zaznaczenie NOWEGO sezonu = postep -> serial wskakuje na gore list
+    // (odznaczenie sezonu nie przesuwa pozycji).
+    if (markProgress && completedSeasons.some((n) => !previous.includes(n))) {
+      metadata.lastProgressAt = new Date().toISOString();
+    }
     metadata.completedSeasons = completedSeasons;
 
     return db.mediaItem.update({

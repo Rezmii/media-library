@@ -94,7 +94,8 @@ export function MediaDetailsDialog({ item, children, onAdd }: MediaDetailsDialog
       if (completedSeasons.length !== allSeasonNumbers.length) {
         setCompletedSeasons(allSeasonNumbers);
         if (item.isAdded) {
-          updateCompletedSeasonsAction(item.externalId, allSeasonNumbers);
+          // Auto-synchronizacja, nie postep uzytkownika -> bez wskakiwania na gore
+          updateCompletedSeasonsAction(item.externalId, allSeasonNumbers, false);
         }
       }
     }

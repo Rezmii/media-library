@@ -353,9 +353,15 @@ export async function toggleFavoriteAction(id: string, isFavorite: boolean) {
   }
 }
 
-export async function updateCompletedSeasonsAction(id: string, completedSeasons: number[]) {
+// markProgress=false dla automatycznej synchronizacji (np. otwarcie modala
+// ukonczonego serialu) — wtedy serial nie wskakuje na gore list.
+export async function updateCompletedSeasonsAction(
+  id: string,
+  completedSeasons: number[],
+  markProgress = true
+) {
   try {
-    await mediaRepository.updateCompletedSeasons(id, completedSeasons);
+    await mediaRepository.updateCompletedSeasons(id, completedSeasons, markProgress);
     revalidatePaths();
     return { success: true };
   } catch (error) {

@@ -1,5 +1,6 @@
 import { MediaItem, Tag } from '@prisma/client';
 
+import { activityTimestamp } from '@/core/activity';
 import { UnifiedMediaItem } from '@/core/types/media';
 
 type DbMediaItem = MediaItem & { tags?: Tag[] };
@@ -13,7 +14,8 @@ export function mapDatabaseItemToUnified(dbItem: DbMediaItem): UnifiedMediaItem 
     type: dbItem.type,
     coverUrl: dbItem.coverUrl,
     status: dbItem.status,
-    rating: dbItem.rating,
+    // 0 traktujemy jako brak oceny (starsze rekordy zapisane z domyslnym 0)
+    rating: dbItem.rating && dbItem.rating > 0 ? dbItem.rating : null,
     note: dbItem.note,
 
     metadata: (dbItem.metadata as Record<string, any>) || {},
@@ -30,9 +32,8 @@ export function mapDatabaseItemToUnified(dbItem: DbMediaItem): UnifiedMediaItem 
           year: 'numeric',
         })
       : null,
-    // Sortowalna "data aktywnosci" = max(dodanie, ukonczenie). Spojne z sortem
-    // w repozytorium (GREATEST(createdAt, completedAt)).
-    activityTs: Math.max(dbItem.createdAt.getTime(), dbItem.completedAt?.getTime() ?? 0),
+    // Sortowalna "data aktywnosci" — ta sama logika co sort w repozytorium.
+    activityTs: activityTimestamp(dbItem),
     isAdded: true,
     isFavorite: dbItem.isFavorite,
     tags: dbItem.tags?.map((tag) => tag.name) || [],
